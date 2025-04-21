@@ -22,7 +22,7 @@ def load_model():
     model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1)
     num_features = model.classifier[1].in_features
     model.classifier[1] = torch.nn.Linear(num_features, 8)
-    model_path = "/home/user/agertel/dipl/efficientnet_b0_sep2_mels_2025-03-11_12-01-06.pth"
+    model_path = "weights/efficientnet_b0_sep2_mels_2025-03-11_12-01-06.pth"
     checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
@@ -35,7 +35,7 @@ CLASSES = [
 ]
 
 # Suppose examples are located in the "examples" folder
-EXAMPLES_FOLDER = "//home/user/agertel/dipl/data/tmp_flac/sample_aug/png"
+EXAMPLES_FOLDER = "degr_examples/"
 
 # Defining a list of our images (title + filename in the folder).
 # The first is clean (original), the rest are various degradations.
@@ -149,8 +149,8 @@ left_col, right_col = st.columns([1, 2])
 with left_col:
     st.markdown("## Examples for Analysis")
     example_files = [
-        "/home/user/agertel/dipl/data/asr_flac_public_phone/8/27/0a6513a19ecc.flac",
-        "/home/user/agertel/dipl/data/tmp_flac/2ab251ffbd41.flac"
+        "flac_examples/0a6513a19ecc.flac",
+        "flac_examples/2ab251ffbd41.flac"
     ]
 
     selected_example = st.selectbox("Choose an example for analysis", example_files)
@@ -224,7 +224,8 @@ with right_col:
 
     # Input path to a local folder
     with st.expander("Or enter a path to a local folder with audio files"):
-        folder_path = '/home/user/agertel/dipl/data/tmp_flac'  # Example default
+        # folder_path = st.text_input('Enter...')
+        folder_path = 'flac_examples/'
         refresh = st.button("🔄 Load from folder")
 
     if "audio_paths" not in st.session_state:
