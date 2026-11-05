@@ -15,5 +15,6 @@ runs/pred_*.csv
 *.npz
 *.onnx
 wandb/
-# but keep bundled weights
-!weights/*.pt
+# weights live on the Hugging Face Hub (agertel/aadd)
+weights/
+*.pt

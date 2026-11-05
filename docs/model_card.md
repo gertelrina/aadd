@@ -1,6 +1,6 @@
 # Model card — AADD degradation detectors
 
-Two checkpoints ship in `weights/`. Both take one second of 16 kHz mono speech and
+Weights are on Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd). v1 and v2 take one second of 16 kHz mono speech and
 return 8 sigmoid probabilities in the fixed order
 `AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion, LowPassFilter, HighPassFilter, None`.
 Load them with `aadd.Detector("v1")` / `aadd.Detector("v2")` or `aadd.model.load_checkpoint`.

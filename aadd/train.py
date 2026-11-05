@@ -4,7 +4,7 @@ Example::
 
     aadd featurize data/train_dev_clean --out feats/train_mel.npz --features mel
     aadd featurize data/test_clean     --out feats/test_mel.npz  --features mel
-    aadd train --train feats/train_mel.npz --test feats/test_mel.npz --out weights/aadd_v2_efficientnet_b0_mel.pt
+    aadd train --train feats/train_mel.npz --test feats/test_mel.npz --out my_models/aadd_v2_retrained.pt
 
 Model selection uses a speaker-disjoint validation split carved out of the
 training set (``--val-fraction``); the ``--test`` set is only reported.

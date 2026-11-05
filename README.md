@@ -112,8 +112,8 @@ pip install -e ".[all]"
 ```
 
 Requirements: Python ≥ 3.10, PyTorch ≥ 2.1 (CPU is fine; CUDA and Apple MPS
-are picked up automatically), `libsndfile` for FLAC/WAV. Two models ship in
-`weights/` (16 MB each); nothing is downloaded at runtime.
+are picked up automatically), `libsndfile` for FLAC/WAV.
+Model weights are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/agertel/aadd)) and downloaded once to `~/.cache/aadd` on first use (v1/v2 16 MB, v3 177 MB); set `AADD_CACHE` to change the folder.
 
 ## Usage
 
@@ -363,7 +363,6 @@ Aesthetics) and to other degradation detectors.
 
 ```
 aadd/            package: features, model, infer (Detector), cli, app, train, eval, baselines, data/
-weights/         aadd_v1_efficientnet_b0_png.pt, aadd_v2_efficientnet_b0_mel.pt
 examples/        a few 16 kHz speech files and one clean second under each degradation (flac + png)
 runs/            evaluation reports (json + md) referenced in this README
 docs/            related work, model card, v3 plan

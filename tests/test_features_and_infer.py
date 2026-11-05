@@ -10,7 +10,19 @@ from aadd.features import FeatureSpec, load_audio, mel_db_v1, mel_features, png_
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLE = REPO / "examples" / "speech" / "61-70968-0000_4.flac"
 CLIP_EXAMPLE = REPO / "examples" / "degradations" / "ClippingDistortion.flac"
-V1 = REPO / "weights" / "aadd_v1_efficientnet_b0_png.pt"
+
+
+def _have_v1() -> bool:
+    """v1 weights come from the Hugging Face Hub (cached after the first download)."""
+    try:
+        from aadd.model import resolve_model_path
+
+        return resolve_model_path("v1").exists()
+    except Exception:  # noqa: BLE001 - offline
+        return False
+
+
+HAVE_V1 = _have_v1()
 
 
 def _pyplot_png(segment, sr):
@@ -75,7 +87,7 @@ def test_feature_spec_roundtrip():
     assert FeatureSpec.from_dict(s.to_dict()) == s
 
 
-@pytest.mark.skipif(not V1.exists(), reason="v1 weights not present")
+@pytest.mark.skipif(not HAVE_V1, reason="v1 weights not available (offline?)")
 def test_detector_v1_on_examples():
     from aadd.infer import Detector
 
@@ -91,7 +103,7 @@ def test_detector_v1_on_examples():
     assert clean.is_clean and clean.probs[:, CLASSES.index(NONE_CLASS)].min() > 0.9
 
 
-@pytest.mark.skipif(not V1.exists(), reason="v1 weights not present")
+@pytest.mark.skipif(not HAVE_V1, reason="v1 weights not available (offline?)")
 def test_detector_resamples_other_rates():
     from aadd.infer import Detector
 
@@ -104,7 +116,7 @@ def test_detector_resamples_other_rates():
     assert res.n_segments == 4 and res.sample_rate == 44100
 
 
-@pytest.mark.skipif(not V1.exists(), reason="v1 weights not present")
+@pytest.mark.skipif(not HAVE_V1, reason="v1 weights not available (offline?)")
 def test_detector_error_row_for_bad_file(tmp_path):
     from aadd.infer import Detector
 

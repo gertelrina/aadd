@@ -190,7 +190,7 @@ class Detector:
             self.features = FeatureSpec(kind="frames")
         else:
             self.model, self.ckpt = load_checkpoint(model, self.device)
-            self.classes = list(self.ckpt["classes"])
+            self.classes = [str(c) for c in self.ckpt["classes"]]
             self.features = FeatureSpec.from_dict(self.ckpt["features"])
         self.threshold = float(threshold)
         self.batch_size = int(batch_size)

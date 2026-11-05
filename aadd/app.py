@@ -15,7 +15,7 @@ import streamlit as st
 from aadd import __version__
 from aadd.constants import DEGRADATION_CLASSES, NONE_CLASS
 from aadd.infer import Detector, FileResult, find_audio_files
-from aadd.model import REGISTRY, WEIGHTS_DIR
+from aadd.model import REGISTRY
 
 REPO = Path(__file__).resolve().parent.parent
 EXAMPLES_DIR = REPO / "examples"
@@ -35,7 +35,7 @@ def get_detector(model: str, device: str | None) -> Detector:
 
 
 def available_models() -> list[str]:
-    return [n for n, s in REGISTRY.items() if (WEIGHTS_DIR / s["file"]).exists()]
+    return [n for n, s in REGISTRY.items() if s.get("url")]  # downloaded from Hugging Face on first use
 
 
 def timeline_figure(res: FileResult):
@@ -74,7 +74,7 @@ def main() -> None:
         st.header("Settings")
         models = available_models()
         if not models:
-            st.error(f"No weights found in {WEIGHTS_DIR}")
+            st.error("No models in the registry")
             st.stop()
         default = cli.model if cli.model in models else ("v2" if "v2" in models else models[0])
         model_name = st.selectbox(

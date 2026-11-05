@@ -10,7 +10,19 @@ from aadd.constants import CLASSES, DEGRADATION_CLASSES
 
 REPO = Path(__file__).resolve().parent.parent
 SRC = [REPO / "examples" / "speech" / "61-70968-0000_0.flac", REPO / "examples" / "degradations" / "orig.flac"]
-V1 = REPO / "weights" / "aadd_v1_efficientnet_b0_png.pt"
+
+
+def _have_v1() -> bool:
+    """v1 weights come from the Hugging Face Hub (cached after the first download)."""
+    try:
+        from aadd.model import resolve_model_path
+
+        return resolve_model_path("v1").exists()
+    except Exception:  # noqa: BLE001 - offline
+        return False
+
+
+HAVE_V1 = _have_v1()
 
 pytest.importorskip("audiomentations")
 
@@ -90,7 +102,7 @@ def test_train_small_cnn_and_eval_npz(small_dataset, tmp_path):
     assert ev["chunk_metrics"]["n"] > 0 and set(ev["chunk_metrics"]["per_class"]) == set(CLASSES)
 
 
-@pytest.mark.skipif(not V1.exists(), reason="v1 weights not present")
+@pytest.mark.skipif(not HAVE_V1, reason="v1 weights not available (offline?)")
 def test_eval_dir_v1(small_dataset, tmp_path):
     from aadd.eval import evaluate_dir, write_report
 
@@ -120,7 +132,7 @@ def test_metrics():
     assert "| None |" in metrics_table(m)
 
 
-@pytest.mark.skipif(not V1.exists(), reason="v1 weights not present")
+@pytest.mark.skipif(not HAVE_V1, reason="v1 weights not available (offline?)")
 def test_cli_scan(tmp_path, capsys):
     from aadd.cli import main
 

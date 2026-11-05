@@ -19,7 +19,7 @@ aadd make-data "$DATA/LibriSpeech/test-clean" --out "$DATA/aadd_test_clean"     
 aadd featurize "$DATA/aadd_train_dev_clean" --out feats/train_mel.npz --features mel
 aadd featurize "$DATA/aadd_test_clean"      --out feats/test_mel.npz  --features mel
 
-aadd train --train feats/train_mel.npz --test feats/test_mel.npz --out weights/aadd_v2_efficientnet_b0_mel.pt \
+aadd train --train feats/train_mel.npz --test feats/test_mel.npz --out my_models/aadd_v2_retrained.pt \
            --epochs 10 --batch-size 128 --lr 5e-4 --log runs/v2_train_log.json
 
 aadd eval "$DATA/aadd_test_clean" --model v2 --workers 8 --out runs/eval_v2_test_clean

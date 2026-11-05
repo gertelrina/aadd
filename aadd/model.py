@@ -30,16 +30,21 @@ from aadd.constants import CLASSES
 from aadd.features import FeatureSpec
 
 CHECKPOINT_FORMAT = "aadd-checkpoint-1"
+# Weights are hosted on the Hugging Face Hub (agertel/aadd) and cached in CACHE_DIR on first use.
+# A local ``weights/`` folder next to the package, if present, takes precedence (for development).
+HF_REPO = "agertel/aadd"
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 
 # name -> (file name, description). Files live in <repo>/weights.
 REGISTRY = {
     "v1": {
         "file": "aadd_v1_efficientnet_b0_png.pt",
+        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v1_efficientnet_b0_png.pt",
         "description": "First model (2025-03-11): EfficientNet-B0 on matplotlib-rendered mel PNGs, 8 outputs.",
     },
     "v2": {
         "file": "aadd_v2_efficientnet_b0_mel.pt",
+        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v2_efficientnet_b0_mel.pt",
         "description": "EfficientNet-B0 on direct log-mel tensors (1x128x63), same labels, 3-5x faster than v1.",
     },
     "v3": {
@@ -146,11 +151,20 @@ def resolve_model_path(name_or_path: str) -> Path:
                 return d / spec["file"]
         if spec.get("url"):
             return _download(spec["url"], CACHE_DIR / spec["file"])
-        return WEIGHTS_DIR / spec["file"]
+        raise FileNotFoundError(f"no local file and no download URL for model {name_or_path!r}")
     p = Path(name_or_path)
     if p.exists():
         return p
     raise FileNotFoundError(f"model {name_or_path!r} is neither a registry name {list(REGISTRY)} nor an existing file")
+
+
+def cached_path(name: str) -> Path | None:
+    """Local path of a registry model if it is already on disk, else None (no download)."""
+    spec = REGISTRY[name]
+    for d in (WEIGHTS_DIR, CACHE_DIR):
+        if (d / spec["file"]).exists():
+            return d / spec["file"]
+    return None
 
 
 def _download(url: str, dst: Path) -> Path:

@@ -23,7 +23,6 @@ import sys
 from pathlib import Path
 
 from aadd import __version__
-from aadd.constants import CLASSES
 
 
 def _add_model_args(p: argparse.ArgumentParser, default: str = "v2"):
@@ -122,23 +121,22 @@ def cmd_app(a: argparse.Namespace) -> int:
 def cmd_info(a: argparse.Namespace) -> int:
     import torch
 
-    from aadd.model import REGISTRY, WEIGHTS_DIR, pick_device
+    from aadd.model import CACHE_DIR, HF_REPO, REGISTRY, cached_path, pick_device
 
     print(f"aadd {__version__}  torch {torch.__version__}  device {pick_device(a.device)}")
-    print(f"classes: {CLASSES}")
-    print(f"weights dir: {WEIGHTS_DIR}")
+    print(f"weights: https://huggingface.co/{HF_REPO}  (cache: {CACHE_DIR})")
     for name, spec in REGISTRY.items():
-        p = WEIGHTS_DIR / spec["file"]
-        status = f"{p.stat().st_size / 1e6:.1f} MB" if p.exists() else "MISSING"
-        print(f"  {name}: {spec['file']} [{status}] - {spec['description']}")
-        if p.exists() and a.verbose:
+        p = cached_path(name)
+        status = f"cached, {p.stat().st_size / 1e6:.0f} MB" if p else ("downloaded on first use" if spec.get("url") else "not released yet")
+        print(f"  {name:8s} [{status}] {spec['description']}")
+        if p and a.verbose:
             from aadd.model import load_checkpoint
 
             _, ck = load_checkpoint(name)
             print(
                 "     "
                 + json.dumps(
-                    {k: v for k, v in ck["meta"].items() if k in ("epoch", "trained", "trained_on", "config")},
+                    {k: v for k, v in ck.get("meta", {}).items() if k in ("epoch", "trained", "trained_on", "step")},
                     default=str,
                 )
             )
