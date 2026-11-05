@@ -79,9 +79,9 @@ Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
 `aadd scan DIR --report report.html` (or `aadd report scan.json`) writes one
 self-contained, **interactive** HTML page for the whole dataset. Move the
 detection threshold, set how many degraded seconds a file may have and still be
-kept, switch classes on or off ("ignore music"), and every number updates live:
+kept, switch classes on or off ("ignore music", or select / clear all at once), and every number updates live:
 how much clean audio is left, which degradations dominate, how degraded each file
-is, which problems come together, each folder, the worst files with a per-second
+is, which problems come together, each folder, a file table ranked worst-first or best-first with a per-second
 timeline. Click any file to **listen to it** with a waveform and a 100 ms class timeline that follows playback (click the timeline or a detected interval to jump there). One click exports the list of kept files as CSV. Light and dark themes,
 no external assets.
 

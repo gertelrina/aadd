@@ -70,8 +70,11 @@ border-radius:999px;padding:2px 10px;font-size:12px;color:var(--text-muted);curs
 .chip.on{border-color:var(--series-1);color:var(--text-primary)}.chip input{display:none}
 .chip .box{width:10px;height:10px;border-radius:3px;border:1.5px solid var(--text-muted)}.chip.on .box{background:var(--series-1);border-color:var(--series-1)}
 .tag{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:0 8px;margin:1px 3px 1px 0;font-size:12px;color:var(--text-secondary)}
-button{font:inherit;font-size:12.5px;border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);border-radius:8px;padding:5px 10px;cursor:pointer}
+button{white-space:nowrap;font:inherit;font-size:12.5px;border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);border-radius:8px;padding:5px 10px;cursor:pointer}
 button:hover{border-color:var(--series-1)}
+.seg{display:inline-flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:8px 0 0 8px;margin-left:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.seg button.on{background:var(--series-1);border-color:var(--series-1);color:#fff}
+select{font:inherit;font-size:12.5px;border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);border-radius:8px;padding:4px 6px}
 svg text{fill:var(--text-secondary);font-size:12px}svg .lbl{fill:var(--text-primary)}svg .val{fill:var(--text-secondary);font-variant-numeric:tabular-nums}
 table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--text-muted);font-weight:500;
 border-bottom:1px solid var(--border);padding:6px 8px}td{border-bottom:1px solid var(--grid);padding:6px 8px;vertical-align:middle}
@@ -92,7 +95,7 @@ const D=window.AADD_DATA;
 const C=D.classes.length, PR=D.pretty;
 const b64=q=>{const b=atob(q);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
 for(const f of D.files){f.p=b64(f.q);if(f.fq)f.fp=b64(f.fq);}
-const st={thr:Math.round(D.threshold*100),tol:0,on:D.classes.map(()=>true)};
+const st={thr:Math.round(D.threshold*100),tol:0,on:D.classes.map(()=>true),sort:'worst',rows:25};
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct=(x,d=0)=>(100*x).toFixed(d)+'%', hrs=s=>s>=3600?(s/3600).toFixed(1)+' h':(s/60).toFixed(0)+' min';
 const seq=v=>v<=0.001?'var(--seq-0)':`var(--seq-${Math.min(7,1+Math.floor(v*7))})`;
@@ -105,12 +108,14 @@ function compute(thr,tol,on,light){
     const n=f.n; let deg=0; const fc=new Uint8Array(C);
     const s=R.sub[f.s]||(R.sub[f.s]={files:0,dur:0,keepDur:0,deg:0,secs:0,cls:new Float64Array(C)});
     s.files++; s.dur+=f.d; s.secs+=n; R.dur+=f.d; R.secs+=n;
-    for(let i=0;i<n;i++){act.length=0;
-      for(let j=0;j<C;j++){if(on[j]&&f.p[i*C+j]>=T){act.push(j);fc[j]=1;if(!light){R.cls[j]++;s.cls[j]++;}}}
+    let sev=0;
+    for(let i=0;i<n;i++){act.length=0;let mx=0;
+      for(let j=0;j<C;j++){if(!on[j])continue;const v=f.p[i*C+j];if(v>mx)mx=v;if(v>=T){act.push(j);fc[j]=1;if(!light){R.cls[j]++;s.cls[j]++;}}}
+      sev+=mx;
       if(act.length){deg++;if(!light)for(const a of act)for(const b of act)R.co[a*C+b]++;}}
     const frac=n?deg/n:0; R.deg+=deg; s.deg+=deg;
     const keep=frac<=tol+1e-9; if(keep){R.keepDur+=f.d;R.keepFiles++;s.keepDur+=f.d;}
-    if(!light){R.hist[Math.min(9,Math.floor(frac*10))]++;for(let j=0;j<C;j++)R.clsFiles[j]+=fc[j];R.files.push({f,frac,deg,fc,keep});}
+    if(!light){R.hist[Math.min(9,Math.floor(frac*10))]++;for(let j=0;j<C;j++)R.clsFiles[j]+=fc[j];R.files.push({f,frac,deg,fc,keep,sev:n?sev/n/255:0});}
   }
   return R;
 }
@@ -183,11 +188,15 @@ function strip(f){
   return `<div class=strip>${out}</div>`;
 }
 function worst(R){
-  const flagged=R.files.filter(x=>x.deg>0), nc=x=>x.fc.reduce((s,v)=>s+v,0);
-  const top=flagged.sort((a,b)=>b.frac-a.frac||nc(b)-nc(a)||a.f.name.localeCompare(b.f.name)).slice(0,25);
-  $('worst-note').textContent=`top ${top.length} of ${flagged.length.toLocaleString()} flagged files · strip = max probability per second`;
-  $('worst').innerHTML='<tr><th></th><th>file</th><th>folder</th><th class=num>length</th><th class=num>degraded</th><th>timeline</th><th>detected</th></tr>'+top.map(x=>
-    `<tr class=row data-i="${x.f.i}"><td><span class=play title="open">${x.f.a?'▶':'⋯'}</span></td><td title="${esc(x.f.path)}">${esc(x.f.name)}</td><td class=muted>${esc(x.f.s)}</td><td class=num>${x.f.d.toFixed(1)} s</td><td class=num>${pct(x.frac)}</td><td>${strip(x.f)}</td><td>${[...Array(C).keys()].filter(j=>x.fc[j]).map(j=>`<span class=tag>${esc(PR[j])}</span>`).join('')}</td></tr>`).join('');
+  const nc=x=>x.fc.reduce((s,v)=>s+v,0), best=st.sort==='best';
+  const list=R.files.slice().sort(best?(a,b)=>a.frac-b.frac||a.sev-b.sev||a.f.name.localeCompare(b.f.name)
+                                       :(a,b)=>b.frac-a.frac||b.sev-a.sev||nc(b)-nc(a)||a.f.name.localeCompare(b.f.name));
+  const top=list.slice(0,st.rows);
+  $('worst-title').textContent=best?'Cleanest files':'Most degraded files';
+  $('worst-note').textContent=`${top.length} of ${list.length.toLocaleString()} files · ranked by share of degraded seconds, then by mean probability · strip = max probability per second`;
+  document.querySelectorAll('#rank button').forEach(bt=>bt.classList.toggle('on',bt.dataset.s===st.sort));
+  $('worst').innerHTML='<tr><th></th><th>file</th><th>folder</th><th class=num>length</th><th class=num>degraded</th><th class=num>severity</th><th>timeline</th><th>detected</th></tr>'+top.map(x=>
+    `<tr class=row data-i="${x.f.i}"><td><span class=play title="open">${x.f.a?'▶':'⋯'}</span></td><td title="${esc(x.f.path)}">${esc(x.f.name)}</td><td class=muted>${esc(x.f.s)}</td><td class=num>${x.f.d.toFixed(1)} s</td><td class=num>${pct(x.frac)}</td><td class=num>${x.sev.toFixed(2)}</td><td>${strip(x.f)}</td><td>${[...Array(C).keys()].filter(j=>x.fc[j]).map(j=>`<span class=tag>${esc(PR[j])}</span>`).join('')||'<span class=muted>clean</span>'}</td></tr>`).join('');
 }
 // ---------------- file inspector
 let AU=null, RAF=0;
@@ -268,9 +277,17 @@ function render(){
 }
 $('chips').innerHTML=D.classes.map((c,j)=>`<label class="chip on" data-j="${j}"><input type=checkbox checked><span class=box></span>${esc(PR[j])}</label>`).join('');
 $('chips').addEventListener('click',e=>{const ch=e.target.closest('.chip');if(!ch)return;e.preventDefault();const j=+ch.dataset.j;st.on[j]=!st.on[j];ch.classList.toggle('on',st.on[j]);render();});
+$('rank').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;st.sort=b.dataset.s;worst(LAST);});
+$('rows').addEventListener('change',e=>{st.rows=+e.target.value;worst(LAST);});
+const setAll=v=>{st.on=st.on.map(()=>v);document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',v));render();};
+$('all-on').addEventListener('click',()=>setAll(true)); $('all-off').addEventListener('click',()=>setAll(false));
 $('thr').value=st.thr; $('thr').addEventListener('input',e=>{st.thr=+e.target.value;render();});
 $('tol').addEventListener('input',e=>{st.tol=+e.target.value/100;render();});
-$('reset').addEventListener('click',()=>{st.thr=Math.round(D.threshold*100);st.tol=0;st.on=st.on.map(()=>true);$('thr').value=st.thr;$('tol').value=0;document.querySelectorAll('.chip').forEach(c=>c.classList.add('on'));render();});
+$('reset').addEventListener('click',()=>{st.thr=Math.round(D.threshold*100);st.tol=0;st.on=st.on.map(()=>true);$('rank').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;st.sort=b.dataset.s;worst(LAST);});
+$('rows').addEventListener('change',e=>{st.rows=+e.target.value;worst(LAST);});
+const setAll=v=>{st.on=st.on.map(()=>v);document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',v));render();};
+$('all-on').addEventListener('click',()=>setAll(true)); $('all-off').addEventListener('click',()=>setAll(false));
+$('thr').value=st.thr;$('tol').value=0;document.querySelectorAll('.chip').forEach(c=>c.classList.add('on'));render();});
 $('dl').addEventListener('click',()=>{const rows=['path,folder,duration_s,degraded_fraction,kept'];for(const x of LAST.files)rows.push(`"${x.f.path.replace(/"/g,'""')}","${x.f.s}",${x.f.d.toFixed(2)},${x.frac.toFixed(4)},${x.keep?1:0}`);
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download=`aadd_files_thr${(st.thr/100).toFixed(2)}_tol${Math.round(st.tol*100)}.csv`;a.click();});
 const tip=$('tip');
@@ -339,30 +356,30 @@ def _pack(scan: dict, audio: str = "path", embed_top: int = 40, report_dir: str 
             files[-1].update(fq=fr_["q"], fh=float(fr_["hop_s"]), fn=int(fr_["n"]))
         if audio == "path" and os.path.exists(path):
             files[-1]["a"] = os.path.relpath(path, report_dir or os.getcwd())
-        thr = float(scan.get("threshold", 0.5))
-        D_ = P >= thr
-        files[-1]["_rank"] = (
-            -(float(D_.any(1).mean()) if len(P) else 0.0),
-            -int(D_.any(0).sum()) if len(P) else 0,
-            files[-1]["name"],
-        )
+        # same ranking as the "worst first" / "best first" table in the page (quantised values, all classes)
+        Q = q.astype(np.float64)
+        frac_ = float((Q >= round(float(scan.get("threshold", 0.5)) * 255)).any(1).mean()) if len(Q) else 0.0
+        sev_ = float((Q.max(1) / 255).mean()) if len(Q) else 0.0
+        ncls_ = int((Q >= round(float(scan.get("threshold", 0.5)) * 255)).any(0).sum()) if len(Q) else 0
+        files[-1]["_worst"] = (-frac_, -sev_, -ncls_, files[-1]["name"])
+        files[-1]["_best"] = (frac_, sev_, files[-1]["name"])
     if audio == "embed":
-        # embed what a reader will click first: the most degraded files in table order, plus the
-        # three most degraded and two clean files of every folder
-        ranked = sorted(files, key=lambda f: f["_rank"])
-        chosen = {id(f): f for f in ranked[:embed_top]}
-        by_sub: dict = {}
-        for f in ranked:
-            by_sub.setdefault(f["s"], []).append(f)
-        for fs in by_sub.values():
-            for f in fs[:3] + [f for f in fs if f["_rank"][0] == 0][:2]:
-                chosen[id(f)] = f
+        # embed what a reader will click first: the top of both rankings, plus the three worst and
+        # two cleanest files of every folder
+        worst_ = sorted(files, key=lambda f: f["_worst"])
+        best_ = sorted(files, key=lambda f: f["_best"])
+        chosen = {id(f): f for f in worst_[:embed_top] + best_[:embed_top]}
+        for sub in {f["s"] for f in files}:
+            chosen.update(
+                {id(f): f for f in [f for f in worst_ if f["s"] == sub][:3] + [f for f in best_ if f["s"] == sub][:2]}
+            )
         for f in chosen.values():
             uri = _encode_mp3(f["path"])
             if uri:
                 f["a"] = uri
     for f in files:
-        f.pop("_rank", None)
+        f.pop("_worst", None)
+        f.pop("_best", None)
     return {
         "classes": classes,
         "pretty": [PRETTY.get(c, c) for c in classes],
@@ -396,7 +413,7 @@ def build_report(
  <div class="ctl">detection threshold <input id="thr" type="range" min="5" max="95" step="1"> <b id="thr-v"></b></div>
  <div class="ctl">keep a file if at most <input id="tol" type="range" min="0" max="50" step="1" value="0"> <b id="tol-v"></b> of its seconds are degraded</div>
  <div class="ctl"><button id="reset">reset</button><button id="dl">download file list (CSV)</button></div>
- <div class="ctl" style="flex-basis:100%">count as degradation: <div class="chips" id="chips"></div></div>
+ <div class="ctl" style="flex-basis:100%">count as degradation: <span class="seg"><button id="all-on">select all</button><button id="all-off">clear all</button></span> <div class="chips" id="chips"></div></div>
 </div>
 <section class="grid g5" id="tiles"></section>
 <section class="grid g2">
@@ -411,8 +428,9 @@ def build_report(
  <div class="card"><div class="head"><h2>By folder</h2><span class="muted">sorted by degraded time</span></div><table id="subs"></table></div>
  <div class="card"><div class="head"><h2>Degradations that occur together</h2><span class="muted" id="heat-note"></span></div><div id="heat"></div></div>
 </section>
-<section class="card"><div class="head"><h2>Most degraded files</h2><span class="muted" id="worst-note"></span>
- <div class="find"><input id="find-in" list="find" placeholder="open any file: type its name…"><datalist id="find"></datalist></div></div>
+<section class="card"><div class="head"><div><h2 id="worst-title">Most degraded files</h2><span class="muted" id="worst-note"></span></div>
+ <div class="find"><span class="seg" id="rank"><button data-s="worst">worst first</button><button data-s="best">best first</button></span>
+ <select id="rows"><option>25</option><option>50</option><option>100</option><option>250</option></select><input id="find-in" list="find" placeholder="open any file: type its name…"><datalist id="find"></datalist></div></div>
  <p class="muted" style="margin:-4px 0 8px">Click a row to listen and see its timeline.</p><table id="worst"></table></section>
 <div id="modal"><div class="panel" id="m-body"></div></div><div id="tip"></div></div>"""
     return (
