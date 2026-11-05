@@ -21,7 +21,7 @@ import torch
 
 from aadd.constants import NONE_CLASS
 from aadd.features import FeatureSpec, load_audio, segment_audio
-from aadd.model import DEFAULT_MODEL, load_checkpoint, pick_device
+from aadd.model import DEFAULT_MODEL, checkpoint_format, load_checkpoint, pick_device, resolve_model_path
 
 AUDIO_EXTENSIONS = (".flac", ".wav", ".mp3", ".ogg", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif")
 
@@ -164,12 +164,23 @@ class Detector:
         threshold: float = 0.5,
         batch_size: int = 64,
         keep_tail: bool = False,
+        resolution: float = 1.0,
     ):
         self.model_name = model
         self.device = pick_device(device)
-        self.model, self.ckpt = load_checkpoint(model, self.device)
-        self.classes: list[str] = list(self.ckpt["classes"])
-        self.features = FeatureSpec.from_dict(self.ckpt["features"])
+        self.resolution = float(resolution)
+        self.frame_model = None
+        if checkpoint_format(model).startswith("aadd-v3"):
+            from aadd.v3.infer import FrameModel
+
+            self.frame_model = FrameModel(str(resolve_model_path(model)), self.device)
+            self.model, self.ckpt = self.frame_model.model, self.frame_model.ckpt
+            self.classes = list(self.frame_model.classes)
+            self.features = FeatureSpec(kind="frames")
+        else:
+            self.model, self.ckpt = load_checkpoint(model, self.device)
+            self.classes = list(self.ckpt["classes"])
+            self.features = FeatureSpec.from_dict(self.ckpt["features"])
         self.threshold = float(threshold)
         self.batch_size = int(batch_size)
         self.keep_tail = keep_tail
@@ -201,9 +212,28 @@ class Detector:
         y = np.asarray(y, dtype=np.float32)
         if y.ndim == 2:  # (channels, n) or (n, channels)
             y = y.mean(axis=0 if y.shape[0] <= 8 else 1)
+        if self.frame_model is not None:
+            return self._predict_frames(y, sr, path)
         starts, ends, feats = self.featurize(y, sr)
         probs = self.predict_batch(feats) if len(starts) else np.zeros((0, len(self.classes)), dtype=np.float32)
         return FileResult(path, sr, len(y) / sr, starts, ends, probs, self.classes, self.threshold, self.model_name)
+
+    def _predict_frames(self, y: np.ndarray, sr: int, path: str) -> FileResult:
+        from aadd.v3.infer import pool_frames
+
+        if sr != 16000:
+            import librosa
+
+            y = librosa.resample(y, orig_sr=sr, target_sr=16000)
+        dur = len(y) / 16000
+        fp = self.frame_model.frame_probs(y) if len(y) else np.zeros((0, len(self.classes)), dtype=np.float32)
+        k = max(1, round(self.resolution / 0.02))
+        probs = pool_frames(fp, k) if len(fp) else fp
+        starts = np.arange(len(probs)) * self.resolution
+        ends = np.minimum(starts + self.resolution, dur)
+        res = FileResult(path, sr, dur, starts, ends, probs, self.classes, self.threshold, self.model_name)
+        res.frame_probs = fp
+        return res
 
     def predict_file(self, path: str | os.PathLike) -> FileResult:
         path = str(path)
@@ -218,6 +248,8 @@ class Detector:
     ) -> Iterator[FileResult]:
         """Score many files. ``workers > 0`` featurises in parallel processes (useful for v1 'png' features)."""
         paths = [str(p) for p in paths]
+        if self.frame_model is not None:
+            workers = 0  # frame models featurise on the device
         it: Iterable = paths
         if progress:
             from tqdm import tqdm

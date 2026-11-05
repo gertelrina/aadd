@@ -40,7 +40,14 @@ def cmd_scan(a: argparse.Namespace) -> int:
     if not files:
         print("no audio files found", file=sys.stderr)
         return 1
-    det = Detector(a.model, device=a.device, threshold=a.threshold, batch_size=a.batch_size, keep_tail=a.keep_tail)
+    det = Detector(
+        a.model,
+        device=a.device,
+        threshold=a.threshold,
+        batch_size=a.batch_size,
+        keep_tail=a.keep_tail,
+        resolution=a.resolution,
+    )
     print(f"model={a.model} features={det.features.kind} device={det.device} files={len(files)}", file=sys.stderr)
     file_rows, seg_rows, dicts = [], [], []
     for res in det.scan(files, workers=a.workers, progress=not a.quiet):
@@ -277,6 +284,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--ext", default="flac,wav,mp3,ogg,opus,m4a", help="extensions to scan [%(default)s]")
     s.add_argument("--no-recursive", action="store_true")
     s.add_argument("--keep-tail", action="store_true", help="also score a trailing partial second (zero-padded)")
+    s.add_argument(
+        "--resolution", type=float, default=1.0, help="segment length in seconds for frame models (v3) [%(default)s]"
+    )
     s.add_argument("--quiet", "-q", action="store_true")
     s.set_defaults(func=cmd_scan)
 

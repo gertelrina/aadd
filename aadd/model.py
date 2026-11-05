@@ -40,9 +40,19 @@ REGISTRY = {
     },
     "v2": {
         "file": "aadd_v2_efficientnet_b0_mel.pt",
-        "description": "EfficientNet-B0 on direct log-mel tensors (1x128x63), same labels, ~20x faster features.",
+        "description": "EfficientNet-B0 on direct log-mel tensors (1x128x63), same labels, 3-5x faster than v1.",
+    },
+    "v3": {
+        "file": "aadd_v3_whisper_small_frames.pt",
+        "url": "https://github.com/gertelrina/aadd/releases/download/v3.0.0/aadd_v3_whisper_small_frames.pt",
+        "description": "Whisper-small encoder, 12 realistic degradation classes per 20 ms frame (noise, music, reverb, codec, ...).",
+    },
+    "v3-lite": {
+        "file": "aadd_v3_lite_crnn_frames.pt",
+        "description": "1.3M-parameter CRNN distilled from v3: same 12 classes per 20 ms frame, fast on CPU.",
     },
 }
+CACHE_DIR = Path(os.environ.get("AADD_CACHE", Path.home() / ".cache" / "aadd"))
 DEFAULT_MODEL = "v2"
 
 
@@ -130,11 +140,33 @@ def save_checkpoint(
 
 def resolve_model_path(name_or_path: str) -> Path:
     if name_or_path in REGISTRY:
-        return WEIGHTS_DIR / REGISTRY[name_or_path]["file"]
+        spec = REGISTRY[name_or_path]
+        for d in (WEIGHTS_DIR, CACHE_DIR):
+            if (d / spec["file"]).exists():
+                return d / spec["file"]
+        if spec.get("url"):
+            return _download(spec["url"], CACHE_DIR / spec["file"])
+        return WEIGHTS_DIR / spec["file"]
     p = Path(name_or_path)
     if p.exists():
         return p
     raise FileNotFoundError(f"model {name_or_path!r} is neither a registry name {list(REGISTRY)} nor an existing file")
+
+
+def _download(url: str, dst: Path) -> Path:
+    import urllib.request
+
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dst.with_suffix(".part")
+    print(f"downloading {url} -> {dst}", flush=True)
+    urllib.request.urlretrieve(url, tmp)
+    tmp.rename(dst)
+    return dst
+
+
+def checkpoint_format(name_or_path: str) -> str:
+    ck = torch.load(resolve_model_path(name_or_path), map_location="cpu", weights_only=False)
+    return ck.get("format", "legacy")
 
 
 def load_checkpoint(name_or_path: str, device: str | torch.device = "cpu") -> tuple[nn.Module, dict]:

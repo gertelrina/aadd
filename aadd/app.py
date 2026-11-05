@@ -41,7 +41,7 @@ def available_models() -> list[str]:
 def timeline_figure(res: FileResult):
     import plotly.express as px
 
-    classes = [c for c in res.classes if c != NONE_CLASS] + [NONE_CLASS]
+    classes = [c for c in res.classes if c != NONE_CLASS] + ([NONE_CLASS] if NONE_CLASS in res.classes else [])
     idx = [res.classes.index(c) for c in classes]
     z = res.probs[:, idx].T
     fig = px.imshow(
@@ -92,7 +92,7 @@ def main() -> None:
         st.write(f"features: `{det.features.kind}`, device: `{det.device}`")
         st.markdown("---")
         st.markdown("**Classes**")
-        st.markdown("\n".join(f"- {c}" for c in DEGRADATION_CLASSES))
+        st.markdown("\n".join(f"- {c}" for c in det.classes if c != NONE_CLASS))
         st.markdown(
             "`Shift` (circular roll inside a second) is practically undetectable from a spectrogram; expect low scores for it."
         )
@@ -198,7 +198,7 @@ def main() -> None:
                             {
                                 "second": [f"{s:.0f}–{e:.0f}" for s, e in zip(r.starts, r.ends)],
                                 "labels": [", ".join(l) or "—" for l in r.segment_labels()],
-                                "p(None)": np.round(r.probs[:, r.classes.index(NONE_CLASS)], 3),
+                                "max p": np.round(r.probs[:, r.degradation_indices].max(1), 3),
                             }
                         )
                     )
@@ -219,7 +219,7 @@ def main() -> None:
             m2.metric("Degraded files", f"{dirty_files} ({dirty_files / max(len(ok), 1):.0%})")
             m3.metric("Seconds analysed", total_seg)
             m4.metric("Degraded seconds", f"{dirty_seg} ({dirty_seg / max(total_seg, 1):.0%})")
-            counts = {c: 0 for c in DEGRADATION_CLASSES}
+            counts = {c: 0 for c in ok[0].classes if c != NONE_CLASS} if ok else {}
             for r in ok:
                 for labs in r.segment_labels():
                     for c in labs:

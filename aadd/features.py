@@ -165,6 +165,8 @@ class FeatureSpec:
     params: dict = field(default_factory=dict)
 
     def __call__(self, y: np.ndarray, sr: int) -> np.ndarray:
+        if self.kind == "frames":
+            raise RuntimeError("frame models (v3) compute features inside the model")
         fn = FEATURE_FUNCS[self.kind]
         if self.kind == "mel":
             return fn(y, sr, n_mels=self.n_mels, **self.params)
