@@ -4,10 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
+**Model:** [huggingface.co/agertel/aadd](https://huggingface.co/agertel/aadd)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center"><img src="docs/img/demo.gif" width="860" alt="AADD v3 localising noise, reverberation, clipping, codec artefacts and clicks in a 14-second clip"></p>
-<p align="center"><sub>v3 (in training) on a held-out LibriSpeech clip: dashed boxes are where degradations were inserted, colour is the model's per-20-ms probability.</sub></p>
+<p align="center"><sub>v3 on a held-out LibriSpeech clip: dashed boxes are where degradations were inserted, colour is the model's per-20-ms probability.</sub></p>
 
 Per-second detection of common audio degradations in speech recordings:
 **Gaussian noise, pitch shift, time stretch, clipping, low-pass and high-pass
@@ -34,7 +35,7 @@ examples/speech/61-70968-0000_4.flac   4.0s   2/4 degraded s   ClippingDistortio
 
 <details><summary>v3 plan: 12 realistic degradation classes every 20 ms, English and Russian, and the nine works it combines</summary>
 
-v3 (training now, see [docs/v3_plan.md](docs/v3_plan.md)) replaces the seven
+v3 (see [docs/v3_plan.md](docs/v3_plan.md); weights on [Hugging Face](https://huggingface.co/agertel/aadd)) replaces the seven
 `audiomentations` classes with **12 realistic degradations**, labels them **every
 20 ms** instead of every second, allows **several at once**, and covers **English
 and Russian**. No single paper does all of this with open weights; v3 combines the
@@ -76,7 +77,7 @@ no external assets.
   <img src="docs/img/report_light.png" width="860" alt="AADD dataset report: summary tiles, share of audio per degradation, files affected, per-file histogram, co-occurrence matrix">
 </picture>
 
-Example above (threshold 0.80, files kept with ≤ 20 % degraded seconds, music not counted): v3 (in training) on 2 248 public recordings it never saw —
+Example above (threshold 0.80, files kept with ≤ 20 % degraded seconds, music not counted): v3 on 2 248 public recordings it never saw —
 VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test.
 [Open the full interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html).
 
@@ -98,7 +99,7 @@ disk (`--audio path`, the default).
 | `dns_real_recordings` (real noisy calls) | 97 % | background noise |
 
 ```bash
-aadd scan my_dataset/ --model v3 --report my_dataset_report.html
+aadd scan my_dataset/ --model v3 --report my_dataset_report.html   # v3 weights are fetched from Hugging Face once
 ```
 
 ## Install
@@ -162,12 +163,13 @@ same in a container.
 
 ## Models
 
-<details><summary>Two bundled models: v1 (PNG input) and v2 (direct log-mel)</summary>
+<details><summary>Three models: v1 (PNG input), v2 (direct log-mel), v3 (Whisper encoder, 12 realistic classes every 20 ms)</summary>
 
 | name | input features | backbone | params | feature time / s of audio | notes |
 |---|---|---|---|---|---|
 | `v1` | mel spectrogram **rendered to a 310×385 PNG with matplotlib** (magma colormap, axes off) | EfficientNet-B0 (ImageNet init), 8 sigmoid outputs | 4.0 M | ≈ 9 ms | the first model (2025-03-11), unchanged weights |
 | `v2` | log-mel tensor 1×128×63 (n_fft 1024, hop 256, top_db 80) | EfficientNet-B0 (ImageNet init, 1-channel stem), 8 sigmoid outputs | 4.0 M | ≈ 1 ms | same data protocol, no image rendering, SpecAugment-style masking |
+| `v3` | Whisper log-mel 80 × 800 (8-s windows, sliding) | Whisper-small encoder, weighted sum of all layers, conv head, 12 sigmoids per 20 ms | 88 M | GPU / Apple MPS recommended | realistic degradations, English + Russian; [weights on Hugging Face](https://huggingface.co/agertel/aadd), downloaded on first use |
 
 Both predict, for every 1-s chunk, the probability of each of
 `AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion,
@@ -180,6 +182,36 @@ inference, 3–5× faster end to end (measured below).
 </details>
 
 ## Results
+
+### v3 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
+
+Real recordings it never saw in training (clip score = 95th percentile of frame
+probabilities):
+
+| set | class | ROC-AUC | recall at p ≥ 0.5 | false alarms on clean |
+|---|---|---|---|---|
+| VoiceBank-DEMAND test, 824 noisy + 824 clean twins | noise | 0.985 | 0.51 | 0.4 % |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | 0.997 | 0.85 | 0.0 % |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | reverberation | 1.000 | 1.00 | 0.0 % |
+| Dynamic-SUPERB noise detection | noise | 0.995 | 0.96 | 1.1 % |
+| Dynamic-SUPERB reverberation, small / medium / large room | reverberation | 0.995 / 1.000 / 0.998 | 0.97 / 1.00 / 0.96 | 0 % |
+
+Held-out synthetic tests with up to three overlapping degradations (all 12 classes):
+
+| test set | frame macro-AP (20 ms) | 1-s macro-F1 | clip macro-AUC |
+|---|---|---|---|
+| English, LibriSpeech test-clean speakers | 0.955 | 0.915 | 0.988 |
+| Russian, Russian LibriSpeech test speakers | 0.959 | 0.883 | 0.986 |
+| English, real measured room impulse responses | 0.951 | 0.909 | 0.989 |
+
+v3 also catches what the earlier models were never trained to see: the
+repository's own "clean" reference clip `examples/degradations/orig.flac` turns out
+to be a narrow-band phone recording (no energy above 4 kHz; v3: low-pass 1.00,
+codec 0.93), and LibriSpeech utterance `61-70968-0000` carries 60 Hz mains hum
+(v3: hum 1.00). Full report: [runs/eval_v3.json](runs/eval_v3.json); per-class
+numbers and limitations: [model card](https://huggingface.co/agertel/aadd).
+
+### v1 and v2 (7 synthetic classes, 1-s chunks)
 
 Evaluation on the regenerated test set (LibriSpeech **test-clean**, 2 620
 source files × (1 clean + 5 degraded copies) = 15 720 files, 108 936 seconds,

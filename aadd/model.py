@@ -44,7 +44,7 @@ REGISTRY = {
     },
     "v3": {
         "file": "aadd_v3_whisper_small_frames.pt",
-        "url": "https://github.com/gertelrina/aadd/releases/download/v3.0.0/aadd_v3_whisper_small_frames.pt",
+        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v3_whisper_small_frames.pt",
         "description": "Whisper-small encoder, 12 realistic degradation classes per 20 ms frame (noise, music, reverb, codec, ...).",
     },
     "v3-lite": {

@@ -98,3 +98,19 @@ plain `np.roll`): it is effectively a within-second discontinuity detector.
 ## Licence
 
 Code and weights: MIT. Training audio: LibriSpeech (CC BY 4.0).
+
+## v3 — `aadd_v3_whisper_small_frames.pt` ([Hugging Face](https://huggingface.co/agertel/aadd))
+
+| | |
+|---|---|
+| architecture | Whisper-small encoder (Apache 2.0), learnable weighted sum of all 13 hidden states, LayerNorm, two Conv1d (k = 5), linear head |
+| output | 12 sigmoids per 20 ms frame: noise, music, reverb, clipping, lowpass, highpass, codec, packet_loss, hum, clicks, pitch_shift, time_stretch |
+| input | 16 kHz mono, 8-s windows (Whisper log-mel 80 × 800), sliding with 1-s overlap for longer audio |
+| training data | LibriSpeech train-clean-100 + Russian LibriSpeech train; on-the-fly degradations from MUSAN, RIRS_NOISES and DSP / codec generators (see `docs/v3_plan.md`) |
+| training | AdamW 3e-5 / 1e-3, cosine, bf16, batch 64, 30 000 steps on one H100 (2.4 h); best validation checkpoint at step 16 000 |
+| results | `runs/eval_v3.json`; summary in README → Results and on the Hugging Face model card |
+
+Limitations specific to v3: noise and hum are the weakest classes (frame AP
+0.80–0.89 and 0.77–0.86), partly because the LibriVox source speech itself
+contains low-level noise and hum; real-world validation covers noise and
+reverberation only; content above 8 kHz is never seen.
