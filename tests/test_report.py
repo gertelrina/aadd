@@ -1,3 +1,7 @@
+import base64
+import json
+import re
+
 import numpy as np
 
 from aadd.report import build_report
@@ -16,21 +20,26 @@ def _file(path, probs, classes):
     }
 
 
-def test_build_report_contains_sections():
+def test_build_report_embeds_data_and_controls():
     classes = ["noise", "reverb", "codec"]
-    rng = np.random.default_rng(0)
-    files = [_file(f"/d/sub{i % 2}/f{i}.wav", rng.random((5, 3)), classes) for i in range(6)]
+    probs = [np.random.default_rng(i).random((5, 3)) for i in range(6)]
+    files = [_file(f"/d/sub{i % 2}/f{i}.wav", p, classes) for i, p in enumerate(probs)]
     files.append({"path": "/d/sub0/bad.wav", "duration_s": 0, "file": {"status": "error"}, "segments": []})
     html = build_report({"model": "v3", "threshold": 0.5, "classes": classes, "files": files}, title="T")
+    assert html.startswith("<!doctype html>")
     for needle in [
-        "files analysed",
-        "Share of audio time affected",
-        "Degradations that occur together",
-        "By folder",
+        'id="thr"',
+        'id="tol"',
+        'id="chips"',
+        'id="dl"',
+        "Clean audio kept vs threshold",
         "Most degraded files",
-        "sub0",
-        "sub1",
-        "Background noise",
     ]:
         assert needle in html
-    assert html.startswith("<!doctype html>") and "http" not in html.split("<body>")[1].split("</style>")[0]
+    data = json.loads(
+        re.search(r'<script id="aadd-data" type="application/json">(.*?)</script>', html, re.DOTALL).group(1)
+    )
+    assert data["errors"] == 1 and len(data["files"]) == 6 and data["pretty"][0] == "Background noise"
+    q = np.frombuffer(base64.b64decode(data["files"][0]["q"]), dtype=np.uint8).reshape(5, 3)
+    assert np.abs(q / 255 - probs[0]).max() <= 0.5 / 255 + 1e-9
+    assert {f["s"] for f in data["files"]} == {"sub0", "sub1"}

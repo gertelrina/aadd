@@ -59,17 +59,20 @@ Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
 ## Dataset report
 
 `aadd scan DIR --report report.html` (or `aadd report scan.json`) writes one
-self-contained HTML page with the statistics of a whole dataset: how much of the
-audio is degraded, which degradations dominate, how degraded each file is, which
-problems come together, a breakdown by folder and the worst files with a
-per-second timeline. Light and dark themes, hover tooltips, no external assets.
+self-contained, **interactive** HTML page for the whole dataset. Move the
+detection threshold, set how many degraded seconds a file may have and still be
+kept, switch classes on or off ("ignore music"), and every number updates live:
+how much clean audio is left, which degradations dominate, how degraded each file
+is, which problems come together, each folder, the worst files with a per-second
+timeline. One click exports the list of kept files as CSV. Light and dark themes,
+no external assets.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_dark.png">
   <img src="docs/img/report_light.png" width="860" alt="AADD dataset report: summary tiles, share of audio per degradation, files affected, per-file histogram, co-occurrence matrix">
 </picture>
 
-Example above: v3 (in training) on 2 248 public recordings it never saw —
+Example above (threshold 0.80, files kept with ≤ 20 % degraded seconds, music not counted): v3 (in training) on 2 248 public recordings it never saw —
 VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test.
 [Open the full interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html).
 
