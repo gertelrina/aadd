@@ -127,7 +127,11 @@ def cmd_info(a: argparse.Namespace) -> int:
     print(f"weights: https://huggingface.co/{HF_REPO}  (cache: {CACHE_DIR})")
     for name, spec in REGISTRY.items():
         p = cached_path(name)
-        status = f"cached, {p.stat().st_size / 1e6:.0f} MB" if p else ("downloaded on first use" if spec.get("url") else "not released yet")
+        status = (
+            f"cached, {p.stat().st_size / 1e6:.0f} MB"
+            if p
+            else ("downloaded on first use" if spec.get("url") else "not released yet")
+        )
         print(f"  {name:8s} [{status}] {spec['description']}")
         if p and a.verbose:
             from aadd.model import load_checkpoint

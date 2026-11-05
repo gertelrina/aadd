@@ -88,7 +88,7 @@ padding:6px 9px;font-size:12px;color:var(--text-primary);box-shadow:0 4px 14px r
 """
 
 JS = r"""
-const D=JSON.parse(document.getElementById('aadd-data').textContent);
+const D=window.AADD_DATA;
 const C=D.classes.length, PR=D.pretty;
 const b64=q=>{const b=atob(q);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
 for(const f of D.files){f.p=b64(f.q);if(f.fq)f.fp=b64(f.fq);}
@@ -194,10 +194,13 @@ let AU=null, RAF=0;
 function openFile(i){
   const f=D.files[i], T=st.thr/100, useF=!!f.fp, hop=useF?f.fh:1, n=useF?f.fn:f.n, P=useF?f.fp:f.p, dur=Math.max(f.d,n*hop*0.999);
   const cls=[...Array(C).keys()].filter(j=>st.on[j]);
-  const W=1040, lw=170, top=useF||f.a?74:8, rh=22, pw=W-lw-10, H=top+rh*cls.length+28;
+  const W=1040, lw=170, WV=56, MT=60, MH=112, top=f.a?MT+MH+8:8, rh=22, pw=W-lw-10, H=top+rh*cls.length+28;
   const cols=Math.min(n,1500), k=n/cols, X=t=>lw+pw*t/dur;
   let s=`<svg id=insp viewBox="0 0 ${W} ${H}" width="100%" style="cursor:pointer">`;
-  if(f.a)s+=`<g id=wave></g><text x="${lw-10}" y="${top/2+4}" text-anchor="end" class="lbl">waveform</text>`;
+  if(f.a)s+=`<g id=wave></g><text x="${lw-10}" y="${WV/2+4}" text-anchor="end" class="lbl">waveform</text>`+
+    `<rect x="${lw}" y="${MT}" width="${pw}" height="${MH}" rx="3" fill="var(--grid)"/><g id=mel><text x="${lw+pw/2}" y="${MT+MH/2+4}" text-anchor="middle">computing mel spectrogram…</text></g>`+
+    `<text x="${lw-10}" y="${MT+MH/2}" text-anchor="end" class="lbl">mel</text><text x="${lw-10}" y="${MT+MH/2+15}" text-anchor="end">spectrogram</text>`+
+    `<text x="${lw-4}" y="${MT+9}" text-anchor="end" font-size="10">8k</text><text x="${lw-4}" y="${MT+MH}" text-anchor="end" font-size="10">0 Hz</text>`;
   cls.forEach((j,r)=>{const y=top+r*rh;let any=false;
     for(let c=0;c<cols;c++){let v=0;for(let i=Math.floor(c*k);i<Math.max(Math.floor((c+1)*k),Math.floor(c*k)+1);i++)v=Math.max(v,P[i*C+j]/255);
       if(v>=T)any=true; if(v>0.02)s+=`<rect x="${(lw+pw*c/cols).toFixed(2)}" y="${y+2}" width="${(pw/cols+0.4).toFixed(2)}" height="${rh-4}" fill="${seq(v)}" data-tip="${esc(PR[j])} · ${(c*k*hop).toFixed(1)} s · p=${v.toFixed(2)}"/>`;}
@@ -218,12 +221,35 @@ function openFile(i){
   $('insp').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)*W/r.width;if(x>=lw)seek((x-lw)/pw*dur)});
   document.querySelectorAll('.ivl').forEach(el=>el.onclick=()=>seek(+el.dataset.t));
   const tick=()=>{if(AU){const x=X(AU.currentTime);ph.setAttribute('x1',x);ph.setAttribute('x2',x)}RAF=requestAnimationFrame(tick)};tick();
-  if(f.a&&f.a.startsWith('data:'))fetch(f.a).then(r=>r.arrayBuffer()).then(b=>new (window.AudioContext||window.webkitAudioContext)().decodeAudioData(b)).then(buf=>{
-    const d=buf.getChannelData(0),px=Math.round(pw),step=Math.max(1,Math.floor(d.length/px)),mid=top/2,amp=top/2-6;let path='';
-    let mx=1e-9;for(let i=0;i<d.length;i+=7)mx=Math.max(mx,Math.abs(d[i]));
-    for(let x=0;x<px;x++){let lo=0,hi=0;for(let i=x*step;i<Math.min(d.length,(x+1)*step);i++){const v=d[i];if(v<lo)lo=v;if(v>hi)hi=v}
-      path+=`M${(lw+x).toFixed(1)} ${(mid-amp*hi/mx).toFixed(1)}V${(mid-amp*lo/mx).toFixed(1)}`;}
-    $('wave').innerHTML=`<path d="${path}" stroke="var(--series-1)" stroke-width="1"/>`;}).catch(()=>{});
+  if(f.a){
+    let ctx; try{ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000})}catch(e){ctx=new (window.AudioContext||window.webkitAudioContext)()}
+    fetch(f.a).then(r=>r.arrayBuffer()).then(b=>ctx.decodeAudioData(b)).then(buf=>{
+      const d=buf.getChannelData(0),sr=buf.sampleRate,px=Math.round(pw),step=Math.max(1,Math.floor(d.length/px)),mid=WV/2,amp=WV/2-4;let path='';
+      let mx=1e-9;for(let i=0;i<d.length;i+=7)mx=Math.max(mx,Math.abs(d[i]));
+      for(let x=0;x<px;x++){let lo=0,hi=0;for(let i=x*step;i<Math.min(d.length,(x+1)*step);i++){const v=d[i];if(v<lo)lo=v;if(v>hi)hi=v}
+        path+=`M${(lw+x).toFixed(1)} ${(mid-amp*hi/mx).toFixed(1)}V${(mid-amp*lo/mx).toFixed(1)}`;}
+      $('wave').innerHTML=`<path d="${path}" stroke="var(--series-1)" stroke-width="1"/>`;
+      $('mel').innerHTML=`<image href="${melImage(d,sr,px)}" x="${lw}" y="${MT}" width="${pw}" height="${MH}" preserveAspectRatio="none"/>`;
+      ctx.close&&ctx.close();
+    }).catch(()=>{$('mel').innerHTML=`<text x="${lw+pw/2}" y="${MT+MH/2+4}" text-anchor="middle">spectrogram needs embedded audio or a web server (browsers block reading local files)</text>`;});
+  }
+}
+function melImage(d,sr,cols){
+  const N=512,NM=80,fmax=Math.min(8000,sr/2),hop=Math.max(1,(d.length-N)/Math.max(cols-1,1));
+  const win=new Float32Array(N);for(let i=0;i<N;i++)win[i]=0.5-0.5*Math.cos(2*Math.PI*i/N);
+  const m2f=m=>700*(10**(m/2595)-1),f2m=f=>2595*Math.log10(1+f/700),mp=[];for(let k=0;k<NM+2;k++)mp.push(m2f(f2m(fmax)*k/(NM+1))*N/sr);
+  const re=new Float32Array(N),im=new Float32Array(N),S=new Float32Array(cols*NM);let mxdb=-1e9;
+  const rev=new Uint16Array(N);for(let i=0,j=0;i<N;i++){rev[i]=j;let b=N>>1;while(j&b){j^=b;b>>=1}j|=b;}
+  for(let c=0;c<cols;c++){const o=Math.floor(c*hop);
+    for(let i=0;i<N;i++){re[rev[i]]=(d[o+i]||0)*win[i];im[rev[i]]=0;}
+    for(let sz=2;sz<=N;sz<<=1){const h=sz>>1,a=-2*Math.PI/sz;for(let st=0;st<N;st+=sz)for(let k=0;k<h;k++){const wr=Math.cos(a*k),wi=Math.sin(a*k),i=st+k,j=i+h,tr=wr*re[j]-wi*im[j],ti=wr*im[j]+wi*re[j];re[j]=re[i]-tr;im[j]=im[i]-ti;re[i]+=tr;im[i]+=ti;}}
+    for(let m=0;m<NM;m++){let e=0;const l=mp[m],ce=mp[m+1],r=mp[m+2];for(let b=Math.max(0,Math.floor(l));b<=Math.min(N/2,Math.ceil(r));b++){const w=b<ce?(b-l)/(ce-l):(r-b)/(r-ce);if(w>0)e+=w*(re[b]*re[b]+im[b]*im[b]);}
+      const db=10*Math.log10(e+1e-10);S[c*NM+m]=db;if(db>mxdb)mxdb=db;}}
+  const LUT=[[0,0,4],[28,16,68],[79,18,123],[129,37,129],[181,54,122],[229,80,100],[251,135,97],[254,194,135],[252,253,191]];
+  const cv=document.createElement('canvas');cv.width=cols;cv.height=NM;const g=cv.getContext('2d'),img=g.createImageData(cols,NM);
+  for(let c=0;c<cols;c++)for(let m=0;m<NM;m++){let v=(S[c*NM+m]-mxdb+80)/80;v=Math.max(0,Math.min(1,v));const x=v*(LUT.length-1),k=Math.min(LUT.length-2,Math.floor(x)),t=x-k;
+    const p=((NM-1-m)*cols+c)*4;for(let ch=0;ch<3;ch++)img.data[p+ch]=LUT[k][ch]+(LUT[k+1][ch]-LUT[k][ch])*t;img.data[p+3]=255;}
+  g.putImageData(img,0,0);return cv.toDataURL();
 }
 function closeFile(){if(AU)AU.pause();cancelAnimationFrame(RAF);$('modal').style.display='none';$('m-body').innerHTML='';AU=null;}
 $('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeFile()});
@@ -392,7 +418,7 @@ def build_report(
     return (
         "<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
         f"<title>{html.escape(title)}</title><style>{CSS}</style></head><body>{body}"
-        f'<script id="aadd-data" type="application/json">{payload}</script><script>{JS}</script></body></html>'
+        f"<script>window.AADD_DATA={payload};</script><script>{JS}</script></body></html>"
     )
 
 

@@ -37,7 +37,7 @@ def test_build_report_embeds_data_and_controls():
     ]:
         assert needle in html
     data = json.loads(
-        re.search(r'<script id="aadd-data" type="application/json">(.*?)</script>', html, re.DOTALL).group(1)
+        re.search(r"<script>window.AADD_DATA=(.*?);</script>", html, re.DOTALL).group(1)
     )
     assert data["errors"] == 1 and len(data["files"]) == 6 and data["pretty"][0] == "Background noise"
     q = np.frombuffer(base64.b64decode(data["files"][0]["q"]), dtype=np.uint8).reshape(5, 3)
