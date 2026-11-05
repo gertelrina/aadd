@@ -54,7 +54,7 @@ def cmd_scan(a: argparse.Namespace) -> int:
         file_rows.append(res.file_row())
         if a.segments:
             seg_rows.extend(res.segment_rows())
-        if a.json:
+        if a.json or a.report:
             dicts.append(res.to_dict())
         if not a.quiet and not a.out:
             d = res.detected
@@ -70,10 +70,17 @@ def cmd_scan(a: argparse.Namespace) -> int:
     if a.segments:
         _write_csv(a.segments, seg_rows)
         print(f"wrote {a.segments} ({len(seg_rows)} segments)", file=sys.stderr)
-    if a.json:
-        with open(a.json, "w") as f:
-            json.dump({"model": a.model, "threshold": a.threshold, "classes": det.classes, "files": dicts}, f, indent=1)
-        print(f"wrote {a.json}", file=sys.stderr)
+    if a.json or a.report:
+        payload = {"model": a.model, "threshold": a.threshold, "classes": det.classes, "files": dicts}
+        if a.json:
+            with open(a.json, "w") as f:
+                json.dump(payload, f, indent=1)
+            print(f"wrote {a.json}", file=sys.stderr)
+        if a.report:
+            from aadd.report import build_report
+
+            Path(a.report).write_text(build_report(payload))
+            print(f"wrote {a.report}", file=sys.stderr)
     n_deg = sum(1 for r in file_rows if r["status"] == "degraded")
     n_err = sum(1 for r in file_rows if r["status"] == "error")
     print(
@@ -91,6 +98,14 @@ def _write_csv(path: str, rows: list[dict]) -> None:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
+
+
+def cmd_report(a: argparse.Namespace) -> int:
+    from aadd.report import write_report
+
+    write_report(a.scan_json, a.out, title=a.title, top_files=a.top)
+    print(f"wrote {a.out}", file=sys.stderr)
+    return 0
 
 
 def cmd_app(a: argparse.Namespace) -> int:
@@ -280,6 +295,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--out", "-o", help="per-file CSV")
     s.add_argument("--segments", help="per-second CSV")
     s.add_argument("--json", help="full JSON output")
+    s.add_argument("--report", help="HTML dashboard with dataset statistics")
     s.add_argument("--workers", type=int, default=0, help="feature-extraction processes (0 = in-process)")
     s.add_argument("--ext", default="flac,wav,mp3,ogg,opus,m4a", help="extensions to scan [%(default)s]")
     s.add_argument("--no-recursive", action="store_true")
@@ -289,6 +305,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     s.add_argument("--quiet", "-q", action="store_true")
     s.set_defaults(func=cmd_scan)
+
+    s = sub.add_parser("report", help="HTML dashboard from a scan JSON")
+    s.add_argument("scan_json")
+    s.add_argument("-o", "--out", default="aadd_report.html")
+    s.add_argument("--title", default=None)
+    s.add_argument("--top", type=int, default=25, help="rows in the most-degraded-files table")
+    s.set_defaults(func=cmd_report)
 
     s = sub.add_parser("app", help="launch the Streamlit UI")
     s.add_argument("--port", type=int, default=8501)

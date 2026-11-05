@@ -3,7 +3,7 @@
 [![CI](https://github.com/gertelrina/aadd/actions/workflows/ci.yml/badge.svg)](https://github.com/gertelrina/aadd/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
+**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center"><img src="docs/img/demo.gif" width="860" alt="AADD v3 localising noise, reverberation, clipping, codec artefacts and clicks in a 14-second clip"></p>
@@ -55,6 +55,35 @@ Data and models used, all openly licensed: LibriSpeech and Russian LibriSpeech
 responses), Whisper-small (backbone); VoiceBank-DEMAND, DNS Challenge 2020 and
 Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
 [docs/v3_plan.md](docs/v3_plan.md); the wider literature: [docs/related_work.md](docs/related_work.md).
+
+## Dataset report
+
+`aadd scan DIR --report report.html` (or `aadd report scan.json`) writes one
+self-contained HTML page with the statistics of a whole dataset: how much of the
+audio is degraded, which degradations dominate, how degraded each file is, which
+problems come together, a breakdown by folder and the worst files with a
+per-second timeline. Light and dark themes, hover tooltips, no external assets.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_dark.png">
+  <img src="docs/img/report_light.png" width="860" alt="AADD dataset report: summary tiles, share of audio per degradation, files affected, per-file histogram, co-occurrence matrix">
+</picture>
+
+Example above: v3 (in training) on 2 248 public recordings it never saw —
+VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test.
+[Open the full interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html).
+
+| folder | files flagged | dominant detection |
+|---|---|---|
+| `voicebank_clean` (studio speech) | 1 % | — |
+| `voicebank_noisy` (same sentences + DEMAND noise) | 82 % | background noise, music-like babble |
+| `dns_reverb_clean` (reverberant speech) | 100 % | reverberation |
+| `dns_reverb_noisy` | 100 % | reverberation + noise |
+| `dns_real_recordings` (real noisy calls) | 97 % | background noise |
+
+```bash
+aadd scan my_dataset/ --model v3 --report my_dataset_report.html
+```
 
 ## Install
 
