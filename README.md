@@ -15,8 +15,13 @@
 **Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
-<p align="center"><img src="docs/img/demo.gif" width="860" alt="AADD v3 localising noise, reverberation, clipping, codec artefacts and clicks in a 14-second clip"></p>
-<p align="center"><sub>v3 on a held-out LibriSpeech clip: dashed boxes are where degradations were inserted, colour is the model's per-20-ms probability.</sub></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/demo_dark.gif">
+    <img src="docs/img/demo.gif" width="860" alt="The AADD report's file view playing a 14-second clip: waveform, mel spectrogram and per-class timeline with a moving playhead">
+  </picture>
+</p>
+<p align="center"><sub>This is the file view of the <a href="#dataset-report">dataset report</a>, recorded as is. The clip is held-out LibriSpeech speech with five degradations inserted at known times: noise 1.5–4.0 s, reverberation 5.0–7.5 s, clipping 8.5–10.0 s, MP3 at 8 kbit/s 10.5–12.5 s, clicks 11.0–13.5 s. v3 finds all five.</sub></p>
 
 Per-second detection of common audio degradations in speech recordings:
 **Gaussian noise, pitch shift, time stretch, clipping, low-pass and high-pass
