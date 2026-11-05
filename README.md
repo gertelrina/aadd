@@ -1,11 +1,18 @@
 # AADD — Automatic Audio Degradation Detection
 
+<p align="center">
+  <a href="https://huggingface.co/agertel/aadd">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-lg-dark.svg">
+      <img src="https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-lg.svg" alt="Model on Hugging Face: agertel/aadd">
+    </picture>
+  </a>
+</p>
+
 [![CI](https://github.com/gertelrina/aadd/actions/workflows/ci.yml/badge.svg)](https://github.com/gertelrina/aadd/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-agertel%2Faadd-yellow)](https://huggingface.co/agertel/aadd)
 
 **Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
-**Model:** [huggingface.co/agertel/aadd](https://huggingface.co/agertel/aadd)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center"><img src="docs/img/demo.gif" width="860" alt="AADD v3 localising noise, reverberation, clipping, codec artefacts and clicks in a 14-second clip"></p>
