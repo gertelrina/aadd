@@ -3,8 +3,11 @@
 [![CI](https://github.com/gertelrina/aadd/actions/workflows/ci.yml/badge.svg)](https://github.com/gertelrina/aadd/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
+**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
+
+<p align="center"><img src="docs/img/demo.gif" width="860" alt="AADD v3 localising noise, reverberation, clipping, codec artefacts and clicks in a 14-second clip"></p>
+<p align="center"><sub>v3 (in training) on a held-out LibriSpeech clip: dashed boxes are where degradations were inserted, colour is the model's per-20-ms probability.</sub></p>
 
 Per-second detection of common audio degradations in speech recordings:
 **Gaussian noise, pitch shift, time stretch, clipping, low-pass and high-pass
@@ -22,12 +25,36 @@ $ aadd scan examples/speech/61-70968-0000_4.flac
 examples/speech/61-70968-0000_4.flac   4.0s   2/4 degraded s   ClippingDistortion 1.00, HighPassFilter 1.00
 ```
 
-<p align="center"><img src="docs/img/app_timeline.png" width="800" alt="Streamlit UI: per-second degradation timeline"></p>
-
 | | v1 (2025) | v2 (this release) |
 |---|---|---|
 | macro-F1, 108 936 test seconds | 0.831 | **0.919** |
 | CPU time per second of audio | 133 ms | **39 ms** |
+
+## v3: what it builds on
+
+v3 (training now, see [docs/v3_plan.md](docs/v3_plan.md)) replaces the seven
+`audiomentations` classes with **12 realistic degradations**, labels them **every
+20 ms** instead of every second, allows **several at once**, and covers **English
+and Russian**. No single paper does all of this with open weights; v3 combines the
+pieces below.
+
+| work | what v3 takes from it | why it matters |
+|---|---|---|
+| [URGENT Challenge](https://arxiv.org/abs/2406.04660) (Zhang et al., 2024–2026) | the degradation taxonomy: noise, reverberation, clipping, band limitation, codecs, packet loss | an agreed, realistic class list used by the speech-enhancement community, instead of augmentation-library defaults |
+| [Audio Degradation Toolbox](https://archives.ismir.net/ismir2013/paper/000145.pdf) (Mauch & Ewert, ISMIR 2013) | chainable degradation units in a fixed signal-chain order; hum and click generators | reproducible compound degradations with exact ground truth |
+| [DAMOS](https://arxiv.org/abs/2608.21176) (Li, Dong, Yan, 2026) | partial distortions inserted into random segments of LibriSpeech with frame-level labels | the model learns *where*, not just *whether*; no seams at fixed 1-s boundaries |
+| [Speech Quality Embeddings](https://arxiv.org/abs/2605.21332) (Kuhlmann et al., Odyssey 2026) | simultaneous degradations in one clip; frame-level evaluation | real recordings rarely have exactly one problem |
+| [Higham et al.](https://openaccess.thecvf.com/content/WACV2022W/VAQ/papers/Higham_A_No-Reference_Model_for_Detecting_Audio_Artifacts_Using_Pretrained_Audio_WACVW_2022_paper.pdf) (Amazon, WACV-W 2022) | a pretrained audio backbone instead of an ImageNet CNN; hum and click classes; per-second reporting | audio pre-training transfers far better to artefact detection |
+| [Saishu et al.](https://link.springer.com/article/10.1186/s13636-021-00198-4) (EURASIP 2021) | one independent detector (sigmoid) per degradation type | handles co-occurring and unseen combinations, unlike a softmax |
+| [WhiSQA](https://arxiv.org/abs/2508.02210) (Close et al., 2025), [UTMOSv2](https://arxiv.org/abs/2409.09305) (Baba et al., SLT 2024) | a speech foundation encoder (Whisper) as the backbone | Whisper was trained on noisy, multilingual real-world audio and is Apache-2.0 licensed |
+| [Tamm et al.](https://arxiv.org/abs/2308.12077) (WASPAA 2023) | a learnable weighted sum of **all** encoder layers | noise and room cues live in early layers, which the last layer discards |
+| [Hook-Net](https://arxiv.org/abs/2202.05718) (Wolff et al., ISMIR 2021) | frame-level outputs and masking frames where a defect is physically absent | clicks and clipping are sparse; per-chunk labels would be mostly wrong |
+
+Data and models used, all openly licensed: LibriSpeech and Russian LibriSpeech
+(speech), MUSAN (noise, music), RIRS_NOISES and the MIT IR survey (room impulse
+responses), Whisper-small (backbone); VoiceBank-DEMAND, DNS Challenge 2020 and
+Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
+[docs/v3_plan.md](docs/v3_plan.md); the wider literature: [docs/related_work.md](docs/related_work.md).
 
 ## Install
 
