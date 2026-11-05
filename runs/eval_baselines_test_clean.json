@@ -1,0 +1,55 @@
+{
+ "data_dir": "data/aadd_test_clean",
+ "n_chunks": 108936,
+ "per_class": {
+  "AddGaussianNoise": {
+   "roc_auc": 0.9999871817581242,
+   "ap": 0.9997573153096455,
+   "best_f1": 0.9989828651905172,
+   "best_threshold": -17.99885261983023,
+   "support": 6384
+  },
+  "PitchShift": {
+   "roc_auc": 0.5,
+   "ap": 0.05987919512374238,
+   "best_f1": 0.11299249084090457,
+   "best_threshold": 0.0,
+   "support": 6523
+  },
+  "TimeStretch": {
+   "roc_auc": 0.7897170708444464,
+   "ap": 0.5732093775309319,
+   "best_f1": 0.7141359260318368,
+   "best_threshold": 0.0043125,
+   "support": 6439
+  },
+  "Shift": {
+   "roc_auc": 0.5100377335763548,
+   "ap": 0.05700816078880453,
+   "best_f1": 0.11963535024325728,
+   "best_threshold": 1.4795143075789434,
+   "support": 6522
+  },
+  "ClippingDistortion": {
+   "roc_auc": 0.9627075349535963,
+   "ap": 0.9283715360079414,
+   "best_f1": 0.9612741531247473,
+   "best_threshold": 0.0200625,
+   "support": 6417
+  },
+  "LowPassFilter": {
+   "roc_auc": 0.9948760084282011,
+   "ap": 0.9673973977424289,
+   "best_f1": 0.9235571920275354,
+   "best_threshold": 0.9960579868015734,
+   "support": 6436
+  },
+  "HighPassFilter": {
+   "roc_auc": 0.9992982106089483,
+   "ap": 0.99498652295089,
+   "best_f1": 0.9706374562604594,
+   "best_threshold": 0.9455250578710058,
+   "support": 6606
+  }
+ }
+}

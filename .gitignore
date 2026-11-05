@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+# data & experiment artifacts (regenerate with `aadd make-data` / `aadd featurize`)
+data/
+feats/
+runs/pred_*.csv
+*.npz
+*.onnx
+wandb/
+# but keep bundled weights
+!weights/*.pt

@@ -1,0 +1,30 @@
+{
+ "v1/mps": {
+  "files": 300,
+  "audio_seconds": 2106,
+  "wall_s": 30.4,
+  "ms_per_audio_second": 14.43,
+  "x_realtime": 69.3
+ },
+ "v2/mps": {
+  "files": 300,
+  "audio_seconds": 2106,
+  "wall_s": 6.51,
+  "ms_per_audio_second": 3.09,
+  "x_realtime": 323.6
+ },
+ "v1/cpu": {
+  "files": 300,
+  "audio_seconds": 2106,
+  "wall_s": 279.8,
+  "ms_per_audio_second": 132.86,
+  "x_realtime": 7.5
+ },
+ "v2/cpu": {
+  "files": 300,
+  "audio_seconds": 2106,
+  "wall_s": 82.92,
+  "ms_per_audio_second": 39.38,
+  "x_realtime": 25.4
+ }
+}
