@@ -85,6 +85,7 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--teacher", default=None, help="v3 checkpoint to distil from (soft targets mixed 50/50)")
     ap.add_argument("--log", default=None)
+    ap.add_argument("--init", default=None, help="start from this v3 checkpoint (fine-tuning)")
     a = ap.parse_args(argv)
 
     torch.manual_seed(a.seed)
@@ -92,6 +93,10 @@ def main(argv=None):
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
     model = build(a.arch).to(dev)
+    if a.init:
+        ck = torch.load(a.init, map_location="cpu", weights_only=False)
+        model.load_state_dict({k: v.float() if v.is_floating_point() else v for k, v in ck["state_dict"].items()})
+        print(f"initialised from {a.init}", flush=True)
     backbone = [p for n, p in model.named_parameters() if n.startswith("encoder.") and p.requires_grad]
     head = [p for n, p in model.named_parameters() if not n.startswith("encoder.") and p.requires_grad]
     groups = [{"params": head, "lr": a.lr_head}]

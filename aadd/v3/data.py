@@ -25,6 +25,9 @@ class Pools:
             self._p[name] = Pool(self.root, name)
         return self._p[name]
 
+    def has(self, name: str) -> bool:
+        return (Path(self.root) / f"{name}.index.json").exists()
+
     def assets(self, split: str, rir: str = "sim") -> Assets:
         if rir == "sim":
             rirs = self["rir_sim"].view(split)
@@ -32,7 +35,30 @@ class Pools:
             rirs = self["rir_real"].view("test")
         else:
             rirs = self["rir_mit"].view("test")
-        return Assets(noises=self["noise"].view(split), music=self["music"].view(split), rirs=rirs)
+        noises = [self["noise"].view(split)]
+        if self.has("noise_fsd"):
+            noises.append(self["noise_fsd"].view(split))
+        babble = (
+            self["speech_en"].view(split)
+            if split != "train"
+            else ConcatView([self["speech_en"].view(split), self["speech_ru"].view(split)])
+        )
+        return Assets(noises=ConcatView(noises), music=self["music"].view(split), rirs=rirs, babble=babble)
+
+
+class ConcatView:
+    """Several pool views behind one index."""
+
+    def __init__(self, views):
+        self.views = [v for v in views if len(v)]
+        self.cum = np.cumsum([0] + [len(v) for v in self.views])
+
+    def __len__(self):
+        return int(self.cum[-1])
+
+    def __getitem__(self, i):
+        k = int(np.searchsorted(self.cum, i, side="right") - 1)
+        return self.views[k][i - int(self.cum[k])]
 
 
 class SynthDataset(Dataset):

@@ -73,6 +73,7 @@ class Assets:
     music: list
     rirs: list
     rir_meta: list | None = None
+    babble: list | None = None  # speech pool for synthetic crowd noise (labelled "noise")
 
 
 def _rms(x: np.ndarray) -> float:
@@ -206,21 +207,32 @@ class Synthesizer:
     # ------------------------------------------------------------------ transforms
     # each returns (processed full signal, observable-frame mask or None)
 
+    def _babble(self, rng) -> np.ndarray:
+        k = int(rng.integers(4, 11))
+        out = np.zeros(self.n, dtype=np.float32)
+        for _ in range(k):
+            sp = _fit(self.a.babble[int(rng.integers(len(self.a.babble)))], self.n, rng)
+            out += sp / (_rms(sp) + 1e-9) * float(rng.uniform(0.5, 1.0))
+        return out
+
     def _noise(self, x, ev, rng, srms):
-        if rng.random() < 0.15 or not self.a.noises:
-            colour = rng.choice(["white", "pink", "brown"])
-            w = rng.standard_normal(self.n).astype(np.float32)
+        u = rng.random()
+        if self.a.babble is not None and 0.12 <= u < 0.32:  # 20 %: crowd of 4-10 other talkers
+            n = self._babble(rng)
+            ev.params["source"] = "babble"
+        elif u < 0.12 or not len(self.a.noises):  # 12 %: white / pink / brown noise
+            colour = str(rng.choice(["white", "pink", "brown"]))
+            n = rng.standard_normal(self.n).astype(np.float32)
             if colour != "white":
                 f = np.fft.rfftfreq(self.n, 1 / SR)
                 f[0] = f[1]
-                spec = np.fft.rfft(w) / (np.sqrt(f) if colour == "pink" else f)
-                w = np.fft.irfft(spec, n=self.n).astype(np.float32)
-            n = w
+                spec = np.fft.rfft(n) / (np.sqrt(f) if colour == "pink" else f)
+                n = np.fft.irfft(spec, n=self.n).astype(np.float32)
             ev.params["source"] = f"colour:{colour}"
-        else:
+        else:  # real recorded noise (MUSAN, FSD50K)
             i = int(rng.integers(len(self.a.noises)))
             n = _fit(self.a.noises[i], self.n, rng)
-            ev.params["source"] = f"musan:{i}"
+            ev.params["source"] = f"pool:{i}"
         snr = float(rng.uniform(-5, 30))
         ev.params["snr_db"] = snr
         g = srms / (_rms(n) + 1e-9) * 10 ** (-snr / 20)

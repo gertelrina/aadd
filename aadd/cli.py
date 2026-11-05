@@ -107,6 +107,14 @@ def cmd_report(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_compare(a: argparse.Namespace) -> int:
+    from aadd.compare import write_compare
+
+    write_compare(a.before, a.after, a.out, title=a.title, audio=a.audio, embed_top=a.embed_top)
+    print(f"wrote {a.out}", file=sys.stderr)
+    return 0
+
+
 def cmd_app(a: argparse.Namespace) -> int:
     import subprocess
 
@@ -320,6 +328,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--embed-top", type=int, default=40, help="with --audio embed: number of most degraded files to embed"
     )
     s.set_defaults(func=cmd_report)
+
+    s = sub.add_parser("compare", help="before/after HTML comparison of two scans of the same files")
+    s.add_argument("before", help="scan JSON before (e.g. raw audio)")
+    s.add_argument("after", help="scan JSON after (e.g. enhanced audio)")
+    s.add_argument("-o", "--out", default="aadd_compare.html")
+    s.add_argument("--title", default=None)
+    s.add_argument("--audio", choices=["path", "embed", "none"], default="path")
+    s.add_argument("--embed-top", type=int, default=25)
+    s.set_defaults(func=cmd_compare)
 
     s = sub.add_parser("app", help="launch the Streamlit UI")
     s.add_argument("--port", type=int, default=8501)

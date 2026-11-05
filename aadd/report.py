@@ -150,14 +150,14 @@ function hist(el,R){
   el.innerHTML=s+'</svg>';
 }
 function curve(el){
-  const xs=[],ys=[];for(let t=5;t<=95;t+=5){const R=compute(t/100,st.tol,st.on,true);xs.push(t/100);ys.push(R.keepDur/Math.max(R.dur,1e-9));}
-  const W=560,H=220,L=44,B=34,Tp=12,pw=W-L-14,ph=H-B-Tp, X=x=>L+pw*(x-0.05)/0.9, Y=y=>Tp+ph-ph*y;
+  const xs=[],ys=[];for(let t=0;t<=100;t+=5){const R=compute(t/100,st.tol,st.on,true);xs.push(t/100);ys.push(R.keepDur/Math.max(R.dur,1e-9));}
+  const W=560,H=220,L=44,B=34,Tp=12,pw=W-L-14,ph=H-B-Tp, X=x=>L+pw*x, Y=y=>Tp+ph-ph*y;
   let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
   for(const y of [0,.25,.5,.75,1])s+=`<line x1="${L}" x2="${W-14}" y1="${Y(y)}" y2="${Y(y)}" stroke="var(--grid)"/><text x="${L-6}" y="${Y(y)+4}" text-anchor="end">${y*100}%</text>`;
-  for(const x of [.1,.3,.5,.7,.9])s+=`<text x="${X(x)}" y="${H-B+16}" text-anchor="middle">${x.toFixed(1)}</text>`;
+  for(const x of [0,.2,.4,.6,.8,1])s+=`<text x="${X(x)}" y="${H-B+16}" text-anchor="middle">${x.toFixed(1)}</text>`;
   s+=`<path d="${xs.map((x,i)=>(i?'L':'M')+X(x).toFixed(1)+' '+Y(ys[i]).toFixed(1)).join(' ')}" fill="none" stroke="var(--series-1)" stroke-width="2"/>`;
   xs.forEach((x,i)=>{s+=`<circle data-tip="threshold ${x.toFixed(2)}<br><b>${pct(ys[i],1)}</b> of the audio kept" cx="${X(x)}" cy="${Y(ys[i])}" r="9" fill="transparent"/>`;});
-  const cur=compute(st.thr/100,st.tol,st.on,true), cx=X(Math.min(.95,Math.max(.05,st.thr/100))), cy=Y(cur.keepDur/Math.max(cur.dur,1e-9));
+  const cur=compute(st.thr/100,st.tol,st.on,true), cx=X(st.thr/100), cy=Y(cur.keepDur/Math.max(cur.dur,1e-9));
   s+=`<line x1="${cx}" x2="${cx}" y1="${Tp}" y2="${Tp+ph}" stroke="var(--text-primary)" stroke-dasharray="3 3"/><circle cx="${cx}" cy="${cy}" r="5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/>`;
   s+=`<text x="${L+pw/2}" y="${H-4}" text-anchor="middle">detection threshold</text>`;
   el.innerHTML=s+'</svg>';
@@ -199,37 +199,37 @@ function worst(R){
     `<tr class=row data-i="${x.f.i}"><td><span class=play title="open">${x.f.a?'▶':'⋯'}</span></td><td title="${esc(x.f.path)}">${esc(x.f.name)}</td><td class=muted>${esc(x.f.s)}</td><td class=num>${x.f.d.toFixed(1)} s</td><td class=num>${pct(x.frac)}</td><td class=num>${x.sev.toFixed(2)}</td><td>${strip(x.f)}</td><td>${[...Array(C).keys()].filter(j=>x.fc[j]).map(j=>`<span class=tag>${esc(PR[j])}</span>`).join('')||'<span class=muted>clean</span>'}</td></tr>`).join('');
 }
 // ---------------- file inspector
-let AU=null, RAF=0;
-function openFile(i){
-  const f=D.files[i], T=st.thr/100, useF=!!f.fp, hop=useF?f.fh:1, n=useF?f.fn:f.n, P=useF?f.fp:f.p, dur=Math.max(f.d,n*hop*0.999);
-  const cls=[...Array(C).keys()].filter(j=>st.on[j]);
+// ---------------- file inspector (shared by the report and the before/after comparison)
+let INSP_N=0;
+function inspector(el,f,o){
+  // o: {T: threshold, on: [bool per class], C, PR, title}
+  const id='i'+(INSP_N++), C_=o.C, PR_=o.PR, T=o.T, useF=!!f.fp, hop=useF?f.fh:1, n=useF?f.fn:f.n, P=useF?f.fp:f.p, dur=Math.max(f.d,n*hop*0.999);
+  const cls=[...Array(C_).keys()].filter(j=>o.on[j]);
   const W=1040, lw=170, WV=56, MT=60, MH=112, top=f.a?MT+MH+8:8, rh=22, pw=W-lw-10, H=top+rh*cls.length+28;
   const cols=Math.min(n,1500), k=n/cols, X=t=>lw+pw*t/dur;
-  let s=`<svg id=insp viewBox="0 0 ${W} ${H}" width="100%" style="cursor:pointer">`;
-  if(f.a)s+=`<g id=wave></g><text x="${lw-10}" y="${WV/2+4}" text-anchor="end" class="lbl">waveform</text>`+
-    `<rect x="${lw}" y="${MT}" width="${pw}" height="${MH}" rx="3" fill="var(--grid)"/><g id=mel><text x="${lw+pw/2}" y="${MT+MH/2+4}" text-anchor="middle">computing mel spectrogram…</text></g>`+
+  let s=`<svg id=${id}-svg viewBox="0 0 ${W} ${H}" width="100%" style="cursor:pointer">`;
+  if(f.a)s+=`<g id=${id}-wave></g><text x="${lw-10}" y="${WV/2+4}" text-anchor="end" class="lbl">waveform</text>`+
+    `<rect x="${lw}" y="${MT}" width="${pw}" height="${MH}" rx="3" fill="var(--grid)"/><g id=${id}-mel><text x="${lw+pw/2}" y="${MT+MH/2+4}" text-anchor="middle">computing mel spectrogram…</text></g>`+
     `<text x="${lw-10}" y="${MT+MH/2}" text-anchor="end" class="lbl">mel</text><text x="${lw-10}" y="${MT+MH/2+15}" text-anchor="end">spectrogram</text>`+
     `<text x="${lw-4}" y="${MT+9}" text-anchor="end" font-size="10">8k</text><text x="${lw-4}" y="${MT+MH}" text-anchor="end" font-size="10">0 Hz</text>`;
   cls.forEach((j,r)=>{const y=top+r*rh;let any=false;
-    for(let c=0;c<cols;c++){let v=0;for(let i=Math.floor(c*k);i<Math.max(Math.floor((c+1)*k),Math.floor(c*k)+1);i++)v=Math.max(v,P[i*C+j]/255);
-      if(v>=T)any=true; if(v>0.02)s+=`<rect x="${(lw+pw*c/cols).toFixed(2)}" y="${y+2}" width="${(pw/cols+0.4).toFixed(2)}" height="${rh-4}" fill="${seq(v)}" data-tip="${esc(PR[j])} · ${(c*k*hop).toFixed(1)} s · p=${v.toFixed(2)}"/>`;}
-    s+=`<text x="${lw-10}" y="${y+rh/2+4}" text-anchor="end" class="${any?'lbl':''}" font-weight="${any?600:400}">${esc(PR[j])}</text><line x1="${lw}" x2="${W-10}" y1="${y+rh}" y2="${y+rh}" stroke="var(--grid)"/>`;});
+    for(let c=0;c<cols;c++){let v=0;for(let i=Math.floor(c*k);i<Math.max(Math.floor((c+1)*k),Math.floor(c*k)+1);i++)v=Math.max(v,P[i*C_+j]/255);
+      if(v>=T)any=true; if(v>0.02)s+=`<rect x="${(lw+pw*c/cols).toFixed(2)}" y="${y+2}" width="${(pw/cols+0.4).toFixed(2)}" height="${rh-4}" fill="${seq(v)}" data-tip="${esc(PR_[j])} · ${(c*k*hop).toFixed(1)} s · p=${v.toFixed(2)}"/>`;}
+    s+=`<text x="${lw-10}" y="${y+rh/2+4}" text-anchor="end" class="${any?'lbl':''}" font-weight="${any?600:400}">${esc(PR_[j])}</text><line x1="${lw}" x2="${W-10}" y1="${y+rh}" y2="${y+rh}" stroke="var(--grid)"/>`;});
   for(let t=0;t<=dur;t+=Math.max(1,Math.ceil(dur/12)))s+=`<text x="${X(t)}" y="${H-8}" text-anchor="middle">${t}s</text>`;
-  s+=`<line id=ph x1="${lw}" x2="${lw}" y1="0" y2="${H-22}" stroke="var(--text-primary)" stroke-width="1.5"/></svg>`;
-  // intervals above threshold
-  const ivs=[];cls.forEach(j=>{const run=[];let a=-1,m=0;for(let i=0;i<=n;i++){const v=i<n?P[i*C+j]/255:0;if(v>=T){if(a<0)a=i;m=Math.max(m,v)}else if(a>=0){run.push([a*hop,i*hop,m]);a=-1;m=0}}
+  s+=`<line id=${id}-ph x1="${lw}" x2="${lw}" y1="0" y2="${H-22}" stroke="var(--text-primary)" stroke-width="1.5"/></svg>`;
+  const ivs=[];cls.forEach(j=>{const run=[];let a=-1,m=0;for(let i=0;i<=n;i++){const v=i<n?P[i*C_+j]/255:0;if(v>=T){if(a<0)a=i;m=Math.max(m,v)}else if(a>=0){run.push([a*hop,i*hop,m]);a=-1;m=0}}
     const mg=[];for(const r of run){const l=mg[mg.length-1];if(l&&r[0]-l[1]<0.5){l[1]=r[1];l[2]=Math.max(l[2],r[2])}else mg.push([...r])}
     for(const r of mg)ivs.push([j,...r]);});
   ivs.sort((x,y)=>x[1]-y[1]);
-  $('m-body').innerHTML=`<div class=head><div><h2>${esc(f.name)}</h2><div class=muted>${esc(f.s)} · ${f.d.toFixed(1)} s · threshold ${T.toFixed(2)} · ${useF?'100 ms':'1 s'} resolution</div></div><button id=m-close>close ✕</button></div>`+
-    (f.a?`<audio id=m-audio controls preload=auto src="${esc(f.a)}"></audio>`:`<p class=muted>Audio is not available in this report (rebuild with <code>--audio path</code> next to the data or <code>--audio embed</code>).</p>`)+s+
-    `<div style="margin-top:8px">${ivs.length?ivs.map(([j,a,b,m])=>`<span class=ivl data-t="${a}"><b>${esc(PR[j])}</b> ${a.toFixed(1)}–${b.toFixed(1)} s <span class=muted>max ${m.toFixed(2)}</span></span>`).join(''):'<span class=muted>No degradation above the threshold.</span>'}</div>`;
-  $('modal').style.display='flex'; $('m-close').onclick=closeFile;
-  AU=$('m-audio'); const ph=$('ph');
-  const seek=t=>{if(AU){AU.currentTime=Math.max(0,Math.min(dur,t));AU.play()}};
-  $('insp').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)*W/r.width;if(x>=lw)seek((x-lw)/pw*dur)});
-  document.querySelectorAll('.ivl').forEach(el=>el.onclick=()=>seek(+el.dataset.t));
-  const tick=()=>{if(AU){const x=X(AU.currentTime);ph.setAttribute('x1',x);ph.setAttribute('x2',x)}RAF=requestAnimationFrame(tick)};tick();
+  el.innerHTML=(o.title?`<h2 style="margin:6px 0 2px">${o.title}</h2>`:'')+
+    (f.a?`<audio id=${id}-au controls preload=auto src="${esc(f.a)}" style="width:100%;margin:6px 0 4px"></audio>`:`<p class=muted>Audio is not available in this report (rebuild with <code>--audio path</code> next to the data or <code>--audio embed</code>).</p>`)+s+
+    `<div style="margin-top:8px">${ivs.length?ivs.map(([j,a,b,m])=>`<span class=ivl data-t="${a}"><b>${esc(PR_[j])}</b> ${a.toFixed(1)}–${b.toFixed(1)} s <span class=muted>max ${m.toFixed(2)}</span></span>`).join(''):'<span class=muted>No degradation above the threshold.</span>'}</div>`;
+  const au=document.getElementById(id+'-au'), ph=document.getElementById(id+'-ph'), svg=document.getElementById(id+'-svg');
+  const seek=t=>{if(au){au.currentTime=Math.max(0,Math.min(dur,t));au.play()}};
+  svg.addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)*W/r.width;if(x>=lw)seek((x-lw)/pw*dur)});
+  el.querySelectorAll('.ivl').forEach(x=>x.onclick=()=>seek(+x.dataset.t));
+  let raf=0;const tick=()=>{if(au){const x=X(au.currentTime);ph.setAttribute('x1',x);ph.setAttribute('x2',x)}raf=requestAnimationFrame(tick)};tick();
   if(f.a){
     let ctx; try{ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000})}catch(e){ctx=new (window.AudioContext||window.webkitAudioContext)()}
     fetch(f.a).then(r=>r.arrayBuffer()).then(b=>ctx.decodeAudioData(b)).then(buf=>{
@@ -237,11 +237,12 @@ function openFile(i){
       let mx=1e-9;for(let i=0;i<d.length;i+=7)mx=Math.max(mx,Math.abs(d[i]));
       for(let x=0;x<px;x++){let lo=0,hi=0;for(let i=x*step;i<Math.min(d.length,(x+1)*step);i++){const v=d[i];if(v<lo)lo=v;if(v>hi)hi=v}
         path+=`M${(lw+x).toFixed(1)} ${(mid-amp*hi/mx).toFixed(1)}V${(mid-amp*lo/mx).toFixed(1)}`;}
-      $('wave').innerHTML=`<path d="${path}" stroke="var(--series-1)" stroke-width="1"/>`;
-      $('mel').innerHTML=`<image href="${melImage(d,sr,px)}" x="${lw}" y="${MT}" width="${pw}" height="${MH}" preserveAspectRatio="none"/>`;
+      document.getElementById(id+'-wave').innerHTML=`<path d="${path}" stroke="var(--series-1)" stroke-width="1"/>`;
+      document.getElementById(id+'-mel').innerHTML=`<image href="${melImage(d,sr,px)}" x="${lw}" y="${MT}" width="${pw}" height="${MH}" preserveAspectRatio="none"/>`;
       ctx.close&&ctx.close();
-    }).catch(()=>{$('mel').innerHTML=`<text x="${lw+pw/2}" y="${MT+MH/2+4}" text-anchor="middle">spectrogram needs embedded audio or a web server (browsers block reading local files)</text>`;});
+    }).catch(()=>{const g=document.getElementById(id+'-mel');if(g)g.innerHTML=`<text x="${lw+pw/2}" y="${MT+MH/2+4}" text-anchor="middle">spectrogram needs embedded audio or a web server (browsers block reading local files)</text>`;});
   }
+  return {audio:au, stop(){if(au)au.pause();cancelAnimationFrame(raf);}};
 }
 function melImage(d,sr,cols){
   const N=512,NM=80,fmax=Math.min(8000,sr/2),hop=Math.max(1,(d.length-N)/Math.max(cols-1,1));
@@ -260,7 +261,14 @@ function melImage(d,sr,cols){
     const p=((NM-1-m)*cols+c)*4;for(let ch=0;ch<3;ch++)img.data[p+ch]=LUT[k][ch]+(LUT[k+1][ch]-LUT[k][ch])*t;img.data[p+3]=255;}
   g.putImageData(img,0,0);return cv.toDataURL();
 }
-function closeFile(){if(AU)AU.pause();cancelAnimationFrame(RAF);$('modal').style.display='none';$('m-body').innerHTML='';AU=null;}
+let OPEN=[];
+function openFile(i){
+  const f=D.files[i];
+  $('m-body').innerHTML=`<div class=head><div><h2>${esc(f.name)}</h2><div class=muted>${esc(f.s)} · ${f.d.toFixed(1)} s · threshold ${(st.thr/100).toFixed(2)} · ${f.fp?'100 ms':'1 s'} resolution</div></div><button id=m-close>close ✕</button></div><div id=m-insp></div>`;
+  $('modal').style.display='flex'; $('m-close').onclick=closeFile;
+  OPEN=[inspector($('m-insp'),f,{T:st.thr/100,on:st.on,C,PR})];
+}
+function closeFile(){OPEN.forEach(h=>h.stop());OPEN=[];$('modal').style.display='none';$('m-body').innerHTML='';}
 $('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeFile()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeFile()});
 $('worst').addEventListener('click',e=>{const r=e.target.closest('tr.row');if(r)openFile(+r.dataset.i)});
@@ -283,11 +291,7 @@ const setAll=v=>{st.on=st.on.map(()=>v);document.querySelectorAll('.chip').forEa
 $('all-on').addEventListener('click',()=>setAll(true)); $('all-off').addEventListener('click',()=>setAll(false));
 $('thr').value=st.thr; $('thr').addEventListener('input',e=>{st.thr=+e.target.value;render();});
 $('tol').addEventListener('input',e=>{st.tol=+e.target.value/100;render();});
-$('reset').addEventListener('click',()=>{st.thr=Math.round(D.threshold*100);st.tol=0;st.on=st.on.map(()=>true);$('rank').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;st.sort=b.dataset.s;worst(LAST);});
-$('rows').addEventListener('change',e=>{st.rows=+e.target.value;worst(LAST);});
-const setAll=v=>{st.on=st.on.map(()=>v);document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',v));render();};
-$('all-on').addEventListener('click',()=>setAll(true)); $('all-off').addEventListener('click',()=>setAll(false));
-$('thr').value=st.thr;$('tol').value=0;document.querySelectorAll('.chip').forEach(c=>c.classList.add('on'));render();});
+$('reset').addEventListener('click',()=>{st.thr=Math.round(D.threshold*100);st.tol=0;st.on=st.on.map(()=>true);$('thr').value=st.thr;$('tol').value=0;document.querySelectorAll('.chip').forEach(c=>c.classList.add('on'));render();});
 $('dl').addEventListener('click',()=>{const rows=['path,folder,duration_s,degraded_fraction,kept'];for(const x of LAST.files)rows.push(`"${x.f.path.replace(/"/g,'""')}","${x.f.s}",${x.f.d.toFixed(2)},${x.frac.toFixed(4)},${x.keep?1:0}`);
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));a.download=`aadd_files_thr${(st.thr/100).toFixed(2)}_tol${Math.round(st.tol*100)}.csv`;a.click();});
 const tip=$('tip');
@@ -410,8 +414,8 @@ def build_report(
 <h1>{html.escape(title)}</h1>
 <div class="sub">model <b>{html.escape(model)}</b> · {len(data["files"]):,} files · generated {now} by <code>aadd report</code></div>
 <div class="controls">
- <div class="ctl">detection threshold <input id="thr" type="range" min="5" max="95" step="1"> <b id="thr-v"></b></div>
- <div class="ctl">keep a file if at most <input id="tol" type="range" min="0" max="50" step="1" value="0"> <b id="tol-v"></b> of its seconds are degraded</div>
+ <div class="ctl">detection threshold <input id="thr" type="range" min="0" max="100" step="1"> <b id="thr-v"></b></div>
+ <div class="ctl">keep a file if at most <input id="tol" type="range" min="0" max="100" step="1" value="0"> <b id="tol-v"></b> of its seconds are degraded</div>
  <div class="ctl"><button id="reset">reset</button><button id="dl">download file list (CSV)</button></div>
  <div class="ctl" style="flex-basis:100%">count as degradation: <span class="seg"><button id="all-on">select all</button><button id="all-off">clear all</button></span> <div class="chips" id="chips"></div></div>
 </div>

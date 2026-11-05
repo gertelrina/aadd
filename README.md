@@ -12,7 +12,7 @@
 [![CI](https://github.com/gertelrina/aadd/actions/workflows/ci.yml/badge.svg)](https://github.com/gertelrina/aadd/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
+**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Before / after](#before--after-did-the-cleaning-help) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center">
@@ -114,6 +114,51 @@ disk (`--audio path`, the default).
 ```bash
 aadd scan my_dataset/ --model v3 --report my_dataset_report.html   # v3 weights are fetched from Hugging Face once
 ```
+
+## Before / after: did the cleaning help?
+
+`aadd compare before.json after.json` puts two scans of the same files side by
+side: every class before and after, each folder, the files that improved most,
+the files that gained new problems, and both versions of a file with their own
+player, spectrogram and timeline.
+
+Example: the 2 248 public recordings from the [dataset report](#dataset-report),
+enhanced with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
+(MossFormerGAN_SE_16K, Apache-2.0) wherever v3 found noise, music or
+reverberation (1 262 files), then scanned again with the same model.
+[Open the interactive comparison](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_dark.png">
+  <img src="docs/img/compare_light.png" width="860" alt="aadd compare: degraded time 71% to 42%, per-class before/after bars">
+</picture>
+
+| enhanced files | degraded time | what changed |
+|---|---|---|
+| VoiceBank + DEMAND noise (670) | 97 % → 2 % | noise 62 % → 0.2 %, music-like noise 49 % → 0.2 % |
+| DNS real recordings (289) | 98 % → 53 % | noise 94 % → 3 %, but codec artefacts 7 % → 14 %, low-pass 6 % → 10 % |
+| DNS reverberant + noise (150) | 100 % → 100 % | noise 77 % → 9 %, reverberation unchanged, codec artefacts 1 % → 32 % |
+| DNS reverberant, no noise (150) | 100 % → 100 % | reverberation unchanged, high-pass 3 % → 76 %, pitch-shift-like 2 % → 18 % |
+
+The enhancer removes noise very well, does not remove reverberation, and on
+reverberant speech introduces band-limiting and codec-like artefacts — the kind
+of side effect a single MOS number hides. Enhance only noisy files:
+
+```bash
+aadd scan raw/ --model v3 --json before.json
+python scripts/enhance_with_clearervoice.py before.json raw/ enhanced/ --classes noise,music
+aadd scan enhanced/ --model v3 --json after.json
+aadd compare before.json after.json -o compare.html --audio embed
+```
+
+<details><summary>Both versions of a reverberant file, before and after enhancement</summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_pair_dark.png">
+  <img src="docs/img/compare_pair_light.png" width="860" alt="One file before and after enhancement: reverberation stays, high-pass, codec and pitch-shift artefacts appear">
+</picture>
+
+</details>
 
 ## Install
 

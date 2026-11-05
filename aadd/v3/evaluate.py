@@ -112,6 +112,13 @@ def main(argv=None):
                 "recall_at_0.5_p95": float((p95[y == 1, j] >= 0.5).mean()),
                 "false_alarm_at_0.5_p95": float((p95[y == 0, j] >= 0.5).mean()),
             }
+        # classes that do not occur in this set at all (e.g. music on noisy speech): any detection is false
+        absent = [c for c in fm.classes if c not in labels and not (c in ("music",) and "music" in name.lower())]
+        res["absent_class_detection_rate"] = {
+            c: float((p95[:, fm.classes.index(c)] >= 0.5).mean())
+            for c in absent
+            if c in ("music", "hum", "clicks", "packet_loss", "pitch_shift", "time_stretch")
+        }
         neg_all = np.all(np.stack(list(labels.values())) == 0, axis=0)
         if neg_all.any():
             fa = p95[neg_all] >= 0.5

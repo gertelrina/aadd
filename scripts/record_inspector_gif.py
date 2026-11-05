@@ -21,19 +21,23 @@ def record(report: str, file_key: str, out: str, dark: bool = False, fps: int = 
     frames = []
     with sync_playwright() as p:
         b = p.chromium.launch()
-        pg = b.new_page(viewport={"width": width, "height": 1000}, device_scale_factor=1, color_scheme="dark" if dark else "light")
+        pg = b.new_page(
+            viewport={"width": width, "height": 1000}, device_scale_factor=1, color_scheme="dark" if dark else "light"
+        )
         pg.goto("file://" + str(Path(report).resolve()))
         pg.wait_for_timeout(600)
         pg.fill("#find-in", file_key)
         pg.dispatch_event("#find-in", "change")
-        pg.wait_for_function("document.querySelector('#mel image') !== null", timeout=30000)
-        pg.add_style_tag(content="#modal{background:transparent!important;padding:0!important} #modal .panel{border-radius:0;border:none} .ivl:hover{border-color:var(--border)}")
-        dur = pg.evaluate("document.getElementById('m-audio').duration")
+        pg.wait_for_function("document.querySelector('#m-insp image') !== null", timeout=30000)
+        pg.add_style_tag(
+            content="#modal{background:transparent!important;padding:0!important} #modal .panel{border-radius:0;border:none} .ivl:hover{border-color:var(--border)}"
+        )
+        dur = pg.evaluate("document.querySelector('#m-insp audio').duration")
         panel = pg.locator("#m-body")
         n = int(dur * fps) + 1
         for k in range(n + 2 * fps):  # hold the last frame for 2 s
             t = min(k / fps, dur - 0.01)
-            pg.evaluate(f"document.getElementById('m-audio').currentTime={t}")
+            pg.evaluate(f"document.querySelector('#m-insp audio').currentTime={t}")
             pg.wait_for_timeout(60)
             img = Image.open(io.BytesIO(panel.screenshot())).convert("RGB")
             frames.append(img.quantize(colors=128, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE))

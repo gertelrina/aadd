@@ -89,6 +89,32 @@ def write_pool(out: Path, name: str, items: list[dict], loader, workers: int = 4
     }
 
 
+def build_fsd(v3_dir: str, out: str, keep_json: str, workers: int = 40) -> dict:
+    """FSD50K clips (CC0 / CC BY, no music or human voice) from the philgzl/fsd50k parquet mirror."""
+    import pyarrow.parquet as pq
+    from huggingface_hub import snapshot_download
+
+    keep = json.loads(Path(keep_json).read_text())
+    d = Path(
+        snapshot_download(
+            "philgzl/fsd50k",
+            repo_type="dataset",
+            allow_patterns=["data/dev-*"],
+            local_dir=str(Path(v3_dir) / "hf/philgzl__fsd50k"),
+        )
+    )
+    items = []
+    for f in sorted((d / "data").glob("dev-*.parquet")):
+        t = pq.read_table(f)
+        for a, name in zip(t.column("audio").to_pylist(), t.column("name").to_pylist()):
+            fname = Path(name).stem.split("_")[0]
+            if fname in keep:
+                m = keep[fname]
+                split = "test" if (zlib.crc32(fname.encode()) % 10) == 0 else m["split"]  # 10 % held out for test
+                items.append({"src": a, "split": split, "id": name, "labels": ",".join(m["labels"][:3])})
+    return write_pool(Path(out), "noise_fsd", items, _load_bytes, workers)
+
+
 class Pool:
     """Read-only view of a pool; ``pool[i]`` -> float32 array; ``pool.split(s)`` -> indices."""
 
@@ -198,6 +224,10 @@ def build_all(v3_dir: str, libri_dir: str, out: str, workers: int = 40) -> list[
 
 if __name__ == "__main__":
     import sys
+
+    if sys.argv[1] == "fsd":
+        print(build_fsd(sys.argv[2], sys.argv[3], sys.argv[4]), flush=True)
+        sys.exit(0)
 
     for r in build_all(sys.argv[1], sys.argv[2], sys.argv[3], workers=int(sys.argv[4]) if len(sys.argv) > 4 else 40):
         print(r, flush=True)
