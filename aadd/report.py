@@ -78,13 +78,20 @@ border-bottom:1px solid var(--border);padding:6px 8px}td{border-bottom:1px solid
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.strip{display:flex;gap:1px;height:14px;min-width:160px}.strip i{flex:1;border-radius:2px}
 #tip{position:fixed;pointer-events:none;background:var(--surface-1);border:1px solid var(--border);border-radius:8px;
 padding:6px 9px;font-size:12px;color:var(--text-primary);box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:9;max-width:320px}
+#worst tr.row{cursor:pointer}#worst tr.row:hover td{background:var(--grid)}
+.play{display:inline-flex;width:22px;height:22px;border-radius:50%;border:1px solid var(--border);align-items:center;justify-content:center;font-size:10px;color:var(--text-secondary)}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:20;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}
+#modal .panel{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;max-width:1100px;width:100%;padding:18px 22px}
+#modal audio{width:100%;margin:8px 0 4px}.ivl{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:8px;padding:3px 9px;margin:3px 6px 3px 0;font-size:12.5px;cursor:pointer}
+.ivl:hover{border-color:var(--series-1)}.find{display:flex;gap:8px;align-items:center}.find input{font:inherit;font-size:13px;padding:5px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface-1);color:var(--text-primary);width:260px}
 @media (max-width:900px){.g5{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
 """
 
 JS = r"""
 const D=JSON.parse(document.getElementById('aadd-data').textContent);
 const C=D.classes.length, PR=D.pretty;
-for(const f of D.files){const b=atob(f.q);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);f.p=a;}
+const b64=q=>{const b=atob(q);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
+for(const f of D.files){f.p=b64(f.q);if(f.fq)f.fp=b64(f.fq);}
 const st={thr:Math.round(D.threshold*100),tol:0,on:D.classes.map(()=>true)};
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct=(x,d=0)=>(100*x).toFixed(d)+'%', hrs=s=>s>=3600?(s/3600).toFixed(1)+' h':(s/60).toFixed(0)+' min';
@@ -179,9 +186,51 @@ function worst(R){
   const flagged=R.files.filter(x=>x.deg>0), nc=x=>x.fc.reduce((s,v)=>s+v,0);
   const top=flagged.sort((a,b)=>b.frac-a.frac||nc(b)-nc(a)||a.f.name.localeCompare(b.f.name)).slice(0,25);
   $('worst-note').textContent=`top ${top.length} of ${flagged.length.toLocaleString()} flagged files · strip = max probability per second`;
-  $('worst').innerHTML='<tr><th>file</th><th>folder</th><th class=num>length</th><th class=num>degraded</th><th>timeline</th><th>detected</th></tr>'+top.map(x=>
-    `<tr><td title="${esc(x.f.path)}">${esc(x.f.name)}</td><td class=muted>${esc(x.f.s)}</td><td class=num>${x.f.d.toFixed(1)} s</td><td class=num>${pct(x.frac)}</td><td>${strip(x.f)}</td><td>${[...Array(C).keys()].filter(j=>x.fc[j]).map(j=>`<span class=tag>${esc(PR[j])}</span>`).join('')}</td></tr>`).join('');
+  $('worst').innerHTML='<tr><th></th><th>file</th><th>folder</th><th class=num>length</th><th class=num>degraded</th><th>timeline</th><th>detected</th></tr>'+top.map(x=>
+    `<tr class=row data-i="${x.f.i}"><td><span class=play title="open">${x.f.a?'▶':'⋯'}</span></td><td title="${esc(x.f.path)}">${esc(x.f.name)}</td><td class=muted>${esc(x.f.s)}</td><td class=num>${x.f.d.toFixed(1)} s</td><td class=num>${pct(x.frac)}</td><td>${strip(x.f)}</td><td>${[...Array(C).keys()].filter(j=>x.fc[j]).map(j=>`<span class=tag>${esc(PR[j])}</span>`).join('')}</td></tr>`).join('');
 }
+// ---------------- file inspector
+let AU=null, RAF=0;
+function openFile(i){
+  const f=D.files[i], T=st.thr/100, useF=!!f.fp, hop=useF?f.fh:1, n=useF?f.fn:f.n, P=useF?f.fp:f.p, dur=Math.max(f.d,n*hop*0.999);
+  const cls=[...Array(C).keys()].filter(j=>st.on[j]);
+  const W=1040, lw=170, top=useF||f.a?74:8, rh=22, pw=W-lw-10, H=top+rh*cls.length+28;
+  const cols=Math.min(n,1500), k=n/cols, X=t=>lw+pw*t/dur;
+  let s=`<svg id=insp viewBox="0 0 ${W} ${H}" width="100%" style="cursor:pointer">`;
+  if(f.a)s+=`<g id=wave></g><text x="${lw-10}" y="${top/2+4}" text-anchor="end" class="lbl">waveform</text>`;
+  cls.forEach((j,r)=>{const y=top+r*rh;let any=false;
+    for(let c=0;c<cols;c++){let v=0;for(let i=Math.floor(c*k);i<Math.max(Math.floor((c+1)*k),Math.floor(c*k)+1);i++)v=Math.max(v,P[i*C+j]/255);
+      if(v>=T)any=true; if(v>0.02)s+=`<rect x="${(lw+pw*c/cols).toFixed(2)}" y="${y+2}" width="${(pw/cols+0.4).toFixed(2)}" height="${rh-4}" fill="${seq(v)}" data-tip="${esc(PR[j])} · ${(c*k*hop).toFixed(1)} s · p=${v.toFixed(2)}"/>`;}
+    s+=`<text x="${lw-10}" y="${y+rh/2+4}" text-anchor="end" class="${any?'lbl':''}" font-weight="${any?600:400}">${esc(PR[j])}</text><line x1="${lw}" x2="${W-10}" y1="${y+rh}" y2="${y+rh}" stroke="var(--grid)"/>`;});
+  for(let t=0;t<=dur;t+=Math.max(1,Math.ceil(dur/12)))s+=`<text x="${X(t)}" y="${H-8}" text-anchor="middle">${t}s</text>`;
+  s+=`<line id=ph x1="${lw}" x2="${lw}" y1="0" y2="${H-22}" stroke="var(--text-primary)" stroke-width="1.5"/></svg>`;
+  // intervals above threshold
+  const ivs=[];cls.forEach(j=>{const run=[];let a=-1,m=0;for(let i=0;i<=n;i++){const v=i<n?P[i*C+j]/255:0;if(v>=T){if(a<0)a=i;m=Math.max(m,v)}else if(a>=0){run.push([a*hop,i*hop,m]);a=-1;m=0}}
+    const mg=[];for(const r of run){const l=mg[mg.length-1];if(l&&r[0]-l[1]<0.5){l[1]=r[1];l[2]=Math.max(l[2],r[2])}else mg.push([...r])}
+    for(const r of mg)ivs.push([j,...r]);});
+  ivs.sort((x,y)=>x[1]-y[1]);
+  $('m-body').innerHTML=`<div class=head><div><h2>${esc(f.name)}</h2><div class=muted>${esc(f.s)} · ${f.d.toFixed(1)} s · threshold ${T.toFixed(2)} · ${useF?'100 ms':'1 s'} resolution</div></div><button id=m-close>close ✕</button></div>`+
+    (f.a?`<audio id=m-audio controls preload=auto src="${esc(f.a)}"></audio>`:`<p class=muted>Audio is not available in this report (rebuild with <code>--audio path</code> next to the data or <code>--audio embed</code>).</p>`)+s+
+    `<div style="margin-top:8px">${ivs.length?ivs.map(([j,a,b,m])=>`<span class=ivl data-t="${a}"><b>${esc(PR[j])}</b> ${a.toFixed(1)}–${b.toFixed(1)} s <span class=muted>max ${m.toFixed(2)}</span></span>`).join(''):'<span class=muted>No degradation above the threshold.</span>'}</div>`;
+  $('modal').style.display='flex'; $('m-close').onclick=closeFile;
+  AU=$('m-audio'); const ph=$('ph');
+  const seek=t=>{if(AU){AU.currentTime=Math.max(0,Math.min(dur,t));AU.play()}};
+  $('insp').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)*W/r.width;if(x>=lw)seek((x-lw)/pw*dur)});
+  document.querySelectorAll('.ivl').forEach(el=>el.onclick=()=>seek(+el.dataset.t));
+  const tick=()=>{if(AU){const x=X(AU.currentTime);ph.setAttribute('x1',x);ph.setAttribute('x2',x)}RAF=requestAnimationFrame(tick)};tick();
+  if(f.a&&f.a.startsWith('data:'))fetch(f.a).then(r=>r.arrayBuffer()).then(b=>new (window.AudioContext||window.webkitAudioContext)().decodeAudioData(b)).then(buf=>{
+    const d=buf.getChannelData(0),px=Math.round(pw),step=Math.max(1,Math.floor(d.length/px)),mid=top/2,amp=top/2-6;let path='';
+    let mx=1e-9;for(let i=0;i<d.length;i+=7)mx=Math.max(mx,Math.abs(d[i]));
+    for(let x=0;x<px;x++){let lo=0,hi=0;for(let i=x*step;i<Math.min(d.length,(x+1)*step);i++){const v=d[i];if(v<lo)lo=v;if(v>hi)hi=v}
+      path+=`M${(lw+x).toFixed(1)} ${(mid-amp*hi/mx).toFixed(1)}V${(mid-amp*lo/mx).toFixed(1)}`;}
+    $('wave').innerHTML=`<path d="${path}" stroke="var(--series-1)" stroke-width="1"/>`;}).catch(()=>{});
+}
+function closeFile(){if(AU)AU.pause();cancelAnimationFrame(RAF);$('modal').style.display='none';$('m-body').innerHTML='';AU=null;}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeFile()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeFile()});
+$('worst').addEventListener('click',e=>{const r=e.target.closest('tr.row');if(r)openFile(+r.dataset.i)});
+$('find').innerHTML=D.files.map((f,i)=>`<option value="${esc(f.s+'/'+f.name)}">`).join('');
+$('find-in').addEventListener('change',e=>{const v=e.target.value;const i=D.files.findIndex(f=>f.s+'/'+f.name===v);if(i>=0)openFile(i);e.target.value=''});
 let LAST=null;
 function render(){
   $('thr-v').textContent=(st.thr/100).toFixed(2); $('tol-v').textContent=pct(st.tol);
@@ -205,7 +254,34 @@ render();
 """
 
 
-def _pack(scan: dict) -> dict:
+def _encode_mp3(path: str, level: float = 0.8) -> str | None:
+    """Audio file -> 16 kHz mono MP3 (~40 kbit/s) data URI, or None if unreadable."""
+    import io
+
+    import soundfile as sf
+
+    from aadd.features import load_audio
+
+    try:
+        y, sr = load_audio(path)
+        buf = io.BytesIO()
+        sf.write(
+            buf,
+            np.clip(y, -1, 1),
+            sr,
+            format="MP3",
+            subtype="MPEG_LAYER_III",
+            compression_level=level,
+            bitrate_mode="CONSTANT",
+        )
+        return "data:audio/mpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _pack(scan: dict, audio: str = "path", embed_top: int = 40, report_dir: str | None = None) -> dict:
+    import os
+
     classes = [c for c in scan["classes"] if c != NONE_CLASS]
     files, errors = [], 0
     for f in scan["files"]:
@@ -229,8 +305,38 @@ def _pack(scan: dict) -> dict:
                 "d": round(float(f.get("duration_s", fr.get("duration_s", 0.0))), 2),
                 "n": len(P),
                 "q": base64.b64encode(q.tobytes()).decode(),
+                "i": len(files),
             }
         )
+        fr_ = f.get("frames")
+        if fr_ and fr_.get("q"):
+            files[-1].update(fq=fr_["q"], fh=float(fr_["hop_s"]), fn=int(fr_["n"]))
+        if audio == "path" and os.path.exists(path):
+            files[-1]["a"] = os.path.relpath(path, report_dir or os.getcwd())
+        thr = float(scan.get("threshold", 0.5))
+        D_ = P >= thr
+        files[-1]["_rank"] = (
+            -(float(D_.any(1).mean()) if len(P) else 0.0),
+            -int(D_.any(0).sum()) if len(P) else 0,
+            files[-1]["name"],
+        )
+    if audio == "embed":
+        # embed what a reader will click first: the most degraded files in table order, plus the
+        # three most degraded and two clean files of every folder
+        ranked = sorted(files, key=lambda f: f["_rank"])
+        chosen = {id(f): f for f in ranked[:embed_top]}
+        by_sub: dict = {}
+        for f in ranked:
+            by_sub.setdefault(f["s"], []).append(f)
+        for fs in by_sub.values():
+            for f in fs[:3] + [f for f in fs if f["_rank"][0] == 0][:2]:
+                chosen[id(f)] = f
+        for f in chosen.values():
+            uri = _encode_mp3(f["path"])
+            if uri:
+                f["a"] = uri
+    for f in files:
+        f.pop("_rank", None)
     return {
         "classes": classes,
         "pretty": [PRETTY.get(c, c) for c in classes],
@@ -241,8 +347,17 @@ def _pack(scan: dict) -> dict:
     }
 
 
-def build_report(scan: dict, title: str | None = None, top_files: int = 25) -> str:
-    data = _pack(scan)
+def build_report(
+    scan: dict,
+    title: str | None = None,
+    top_files: int = 25,
+    audio: str = "path",
+    embed_top: int = 40,
+    report_dir: str | None = None,
+) -> str:
+    """``audio``: "path" (relative links, works next to the data), "embed" (MP3 inside the page for the
+    ``embed_top`` most degraded files and a few clean ones) or "none"."""
+    data = _pack(scan, audio=audio, embed_top=embed_top, report_dir=report_dir)
     title = title or "Audio degradation report"
     now = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
     model = Path(data["model"]).name or data["model"]
@@ -270,8 +385,10 @@ def build_report(scan: dict, title: str | None = None, top_files: int = 25) -> s
  <div class="card"><div class="head"><h2>By folder</h2><span class="muted">sorted by degraded time</span></div><table id="subs"></table></div>
  <div class="card"><div class="head"><h2>Degradations that occur together</h2><span class="muted" id="heat-note"></span></div><div id="heat"></div></div>
 </section>
-<section class="card"><div class="head"><h2>Most degraded files</h2><span class="muted" id="worst-note"></span></div><table id="worst"></table></section>
-</div><div id="tip"></div>"""
+<section class="card"><div class="head"><h2>Most degraded files</h2><span class="muted" id="worst-note"></span>
+ <div class="find"><input id="find-in" list="find" placeholder="open any file: type its name…"><datalist id="find"></datalist></div></div>
+ <p class="muted" style="margin:-4px 0 8px">Click a row to listen and see its timeline.</p><table id="worst"></table></section>
+<div id="modal"><div class="panel" id="m-body"></div></div><div id="tip"></div></div>"""
     return (
         "<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
         f"<title>{html.escape(title)}</title><style>{CSS}</style></head><body>{body}"
@@ -279,7 +396,17 @@ def build_report(scan: dict, title: str | None = None, top_files: int = 25) -> s
     )
 
 
-def write_report(scan_json: str, out: str, title: str | None = None, top_files: int = 25) -> str:
+def write_report(
+    scan_json: str, out: str, title: str | None = None, top_files: int = 25, audio: str = "path", embed_top: int = 40
+) -> str:
     scan = json.loads(Path(scan_json).read_text())
-    Path(out).write_text(build_report(scan, title=title, top_files=top_files))
+    rep = build_report(
+        scan,
+        title=title,
+        top_files=top_files,
+        audio=audio,
+        embed_top=embed_top,
+        report_dir=str(Path(out).resolve().parent),
+    )
+    Path(out).write_text(rep)
     return out

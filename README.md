@@ -32,6 +32,8 @@ examples/speech/61-70968-0000_4.flac   4.0s   2/4 degraded s   ClippingDistortio
 
 ## v3: what it builds on
 
+<details><summary>v3 plan: 12 realistic degradation classes every 20 ms, English and Russian, and the nine works it combines</summary>
+
 v3 (training now, see [docs/v3_plan.md](docs/v3_plan.md)) replaces the seven
 `audiomentations` classes with **12 realistic degradations**, labels them **every
 20 ms** instead of every second, allows **several at once**, and covers **English
@@ -56,6 +58,8 @@ responses), Whisper-small (backbone); VoiceBank-DEMAND, DNS Challenge 2020 and
 Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
 [docs/v3_plan.md](docs/v3_plan.md); the wider literature: [docs/related_work.md](docs/related_work.md).
 
+</details>
+
 ## Dataset report
 
 `aadd scan DIR --report report.html` (or `aadd report scan.json`) writes one
@@ -64,7 +68,7 @@ detection threshold, set how many degraded seconds a file may have and still be
 kept, switch classes on or off ("ignore music"), and every number updates live:
 how much clean audio is left, which degradations dominate, how degraded each file
 is, which problems come together, each folder, the worst files with a per-second
-timeline. One click exports the list of kept files as CSV. Light and dark themes,
+timeline. Click any file to **listen to it** with a waveform and a 100 ms class timeline that follows playback (click the timeline or a detected interval to jump there). One click exports the list of kept files as CSV. Light and dark themes,
 no external assets.
 
 <picture>
@@ -75,6 +79,15 @@ no external assets.
 Example above (threshold 0.80, files kept with ≤ 20 % degraded seconds, music not counted): v3 (in training) on 2 248 public recordings it never saw —
 VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test.
 [Open the full interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_inspector_dark.png">
+  <img src="docs/img/report_inspector_light.png" width="860" alt="File inspector: player, waveform, per-class 100 ms timeline with playhead, detected intervals">
+</picture>
+
+The example page embeds audio for the most degraded files and a few clean ones per
+folder (`--audio embed`); a report built next to your data plays every file from
+disk (`--audio path`, the default).
 
 | folder | files flagged | dominant detection |
 |---|---|---|

@@ -127,8 +127,8 @@ class FileResult:
             rows.append(r)
         return rows
 
-    def to_dict(self) -> dict:
-        return {
+    def to_dict(self, frame_hop: float = 0.1) -> dict:
+        d = {
             "path": self.path,
             "model": self.model,
             "threshold": self.threshold,
@@ -138,6 +138,17 @@ class FileResult:
             "file": self.file_row(),
             "segments": self.segment_rows(),
         }
+        fp = getattr(self, "frame_probs", None)
+        if fp is not None and len(fp):
+            # frame models: keep a finer timeline (max over ``frame_hop`` s), one byte per value
+            import base64
+
+            k = max(1, round(frame_hop / 0.02))
+            n = int(np.ceil(len(fp) / k))
+            pooled = np.stack([fp[i * k : (i + 1) * k].max(0) for i in range(n)])
+            q = np.clip(np.round(pooled * 255), 0, 255).astype(np.uint8)
+            d["frames"] = {"hop_s": k * 0.02, "n": n, "q": base64.b64encode(q.tobytes()).decode()}
+        return d
 
     @classmethod
     def failed(cls, path: str, error: str, classes: list[str], threshold: float, model: str) -> FileResult:

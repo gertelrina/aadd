@@ -79,7 +79,7 @@ def cmd_scan(a: argparse.Namespace) -> int:
         if a.report:
             from aadd.report import build_report
 
-            Path(a.report).write_text(build_report(payload))
+            Path(a.report).write_text(build_report(payload, report_dir=str(Path(a.report).resolve().parent)))
             print(f"wrote {a.report}", file=sys.stderr)
     n_deg = sum(1 for r in file_rows if r["status"] == "degraded")
     n_err = sum(1 for r in file_rows if r["status"] == "error")
@@ -103,7 +103,7 @@ def _write_csv(path: str, rows: list[dict]) -> None:
 def cmd_report(a: argparse.Namespace) -> int:
     from aadd.report import write_report
 
-    write_report(a.scan_json, a.out, title=a.title, top_files=a.top)
+    write_report(a.scan_json, a.out, title=a.title, top_files=a.top, audio=a.audio, embed_top=a.embed_top)
     print(f"wrote {a.out}", file=sys.stderr)
     return 0
 
@@ -311,6 +311,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-o", "--out", default="aadd_report.html")
     s.add_argument("--title", default=None)
     s.add_argument("--top", type=int, default=25, help="rows in the most-degraded-files table")
+    s.add_argument(
+        "--audio", choices=["path", "embed", "none"], default="path", help="how the player finds audio [%(default)s]"
+    )
+    s.add_argument(
+        "--embed-top", type=int, default=40, help="with --audio embed: number of most degraded files to embed"
+    )
     s.set_defaults(func=cmd_report)
 
     s = sub.add_parser("app", help="launch the Streamlit UI")
