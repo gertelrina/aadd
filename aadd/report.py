@@ -152,6 +152,8 @@ def _histogram(values: np.ndarray, bins: int = 10, width: int = 560, height: int
 def _heatmap(classes: list[str], M: np.ndarray, N: np.ndarray, width: int = 560) -> str:
     """M[i,j] = share of seconds with class i where class j is also detected (row-normalised)."""
     n = len(classes)
+    if n < 2:
+        return '<p class="muted">Not enough detections to show co-occurrence (needs two classes with enough seconds).</p>'
     lab_w = 160
     cell = (width - lab_w - 70) / n
     h = lab_w + n * cell
