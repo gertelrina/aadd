@@ -165,12 +165,3 @@ def test_cli_info(capsys):
 
     assert main(["info"]) == 0
     assert "v1" in capsys.readouterr().out
-
-
-def test_streamlit_app_runs_without_exceptions():
-    pytest.importorskip("streamlit")
-    from streamlit.testing.v1 import AppTest
-
-    at = AppTest.from_file(str(REPO / "aadd" / "app.py"), default_timeout=120).run()
-    assert not at.exception, [str(e) for e in at.exception]
-    assert at.title[0].value.startswith("AADD")

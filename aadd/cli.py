@@ -3,7 +3,8 @@
 Commands
 --------
 scan                score audio files / folders -> CSV (per file + per second) or JSON
-app                 launch the Streamlit UI
+report              interactive HTML dashboard for a scanned dataset
+compare             before / after HTML comparison of two scans
 info                list bundled models and the compute device
 make-data           build the synthetic degradation dataset from clean audio (v1/v2 protocol)
 featurize           precompute chunk features (mel / png) for a make-data directory
@@ -113,17 +114,6 @@ def cmd_compare(a: argparse.Namespace) -> int:
     write_compare(a.before, a.after, a.out, title=a.title, audio=a.audio, embed_top=a.embed_top)
     print(f"wrote {a.out}", file=sys.stderr)
     return 0
-
-
-def cmd_app(a: argparse.Namespace) -> int:
-    import subprocess
-
-    app = Path(__file__).resolve().parent / "app.py"
-    cmd = [sys.executable, "-m", "streamlit", "run", str(app), "--server.port", str(a.port)]
-    if a.headless:
-        cmd += ["--server.headless", "true"]
-    cmd += ["--"] + (["--model", a.model] if a.model else []) + (["--scan", *a.scan] if a.scan else [])
-    return subprocess.call(cmd)
 
 
 def cmd_info(a: argparse.Namespace) -> int:
@@ -337,13 +327,6 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--audio", choices=["path", "embed", "none"], default="path")
     s.add_argument("--embed-top", type=int, default=25)
     s.set_defaults(func=cmd_compare)
-
-    s = sub.add_parser("app", help="launch the Streamlit UI")
-    s.add_argument("--port", type=int, default=8501)
-    s.add_argument("--headless", action="store_true")
-    s.add_argument("--model", default=None)
-    s.add_argument("--scan", nargs="*", default=None, help="files/folders to analyse automatically on start")
-    s.set_defaults(func=cmd_app)
 
     s = sub.add_parser("info", help="models and device")
     s.add_argument("--device", default=None)

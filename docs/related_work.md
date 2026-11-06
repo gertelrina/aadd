@@ -154,7 +154,7 @@ negative baselines, not as the model.
 | WenetSpeech4TTS [64]; WenetSpeech-Yue [65] | 2024–2025 | DNSMOS P.808 tiers (> 4.0 / 3.8 / 3.6); DNSMOS > 2.5 and Brouhaha SNR > 25 dB | per-utterance quality columns | — | production corpora already ship per-utterance quality fields; type-of-degradation column is the missing axis |
 | Data-Speech / Parler-TTS [66] | 2024 | Brouhaha SNR and C50, SQUIM PESQ/SI-SDR, binned into text tags | dataset columns | MIT | "degradation as per-utterance column" design AADD extends |
 | NeMo SDP [67] | 2024 | `TorchSquimObjectiveQualityMetricsProcessor`, `BandwidthEstimationProcessor`, `PreserveByValue`, `LambdaExpression` | JSONL manifest `{audio_filepath,duration,text,…}` with `segments[i].metrics` | Apache-2.0 | no noise/reverb/clipping processor |
-| NeMo SDE [68] | 2021 | peak level, bandwidth; any extra manifest field becomes a sortable column | JSONL manifest | Apache-2.0 | the Streamlit dataset-stats page re-implements a subset |
+| NeMo SDE [68] | 2021 | peak level, bandwidth; any extra manifest field becomes a sortable column | JSONL manifest | Apache-2.0 | the `aadd report` dashboard re-implements a subset |
 | NeMo Curator [69]; Granary [70] | 2025 | WER/CER/duration only | JSONL | Apache-2.0 | no acoustic-quality stage even at 643k-hour scale |
 | lhotse / Libriheavy [71] | 2024 | — | `cut.custom` dict, `attach_tensor` per-frame arrays | Apache-2.0 | second integration target; Libriheavy is a large real-defect demo set |
 | Brouhaha [72] | 2023 | per-16-ms VAD, SNR (dB), C50 | per-frame `.npy` + per-file mean txt | code MIT; HF model OpenRAIL, gated | nearest tool in spirit; AADD has no reverb class and no SNR regression |
@@ -185,7 +185,7 @@ SQUIM processor convention so a `PreserveByValue: {input_value_key: aadd_degrade
 filter works; the same object can be written as `cut.custom["aadd"]` plus `attach_tensor("aadd_probs", N×8,
 frame_shift=1.0)` for lhotse, as an `"aadd"` block next to `"dnsmos"` for Emilia, and as a VERSA metric entry.
 Two one-file contributions (an `AADDDegradationProcessor` subclassing SDP's `BaseParallelProcessor`, a
-`- name: aadd` metric in VERSA) make AADD usable by the NeMo and ESPnet communities without the Streamlit app.
+`- name: aadd` metric in VERSA) make AADD usable by the NeMo and ESPnet communities without its HTML report.
 Audiobox Aesthetics' `audio-aes input.jsonl > output.jsonl` contract (`{path,start_time,end_time}` in, one key per
 axis out) is the cleanest CLI template to copy.
 
@@ -205,7 +205,7 @@ Three further non-deep comparators: openSMILE eGeMAPSv02 functionals + logistic 
 baseline on the same chunks [95]; ITU-T P.563 [24], the single-ended standard that first detects a dominant
 distortion class (noise, mutes, robotisation) and only then maps to MOS, i.e. AADD's "type first, then severity"
 order from 2004; and the Essentia audio-problem suite, which Ozturk ran over all 51k FSD50K clips for dataset-level
-statistics [94], the same deliverable as the Streamlit statistics page. The URGENT 2024 audit [36] did the same at
+statistics [94], the same deliverable as the `aadd report` dashboard. The URGENT 2024 audit [36] did the same at
 corpus scale with WADA-SNR and the −50 dB bandwidth rule and found declared ≠ effective bandwidth in most of
 DNS5-LibriVox and CommonVoice. Thresholds for the rules above are deliberately not baked in; `aadd eval
 --baselines` reports threshold-free ROC-AUC/AP and best achievable F1 (see README → Results). The augmentation

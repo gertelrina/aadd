@@ -163,7 +163,7 @@ aadd compare before.json after.json -o compare.html --audio embed
 ## Install
 
 ```bash
-pip install "aadd[app] @ git+https://github.com/gertelrina/aadd"
+pip install "aadd @ git+https://github.com/gertelrina/aadd"
 # or, for development / training:
 git clone https://github.com/gertelrina/aadd && cd aadd
 pip install -e ".[all]"
@@ -181,7 +181,7 @@ Model weights are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/
 aadd scan path/to/audio_dir -o report.csv --segments seconds.csv   # folder -> per-file + per-second CSV
 aadd scan a.flac b.wav --json out.json --threshold 0.7              # files -> JSON
 aadd scan big_dir --workers 8 --model v1                            # parallel feature extraction, first model
-aadd app                                                            # Streamlit UI on http://localhost:8501
+aadd scan audio_dir --model v3 --report report.html          # interactive HTML dashboard (see Dataset report)
 aadd info                                                           # bundled models, device
 ```
 
@@ -210,12 +210,12 @@ for r in det.scan(["a.flac", "b.flac"], workers=4):   # many files, parallel fea
 
 </details>
 
-<details><summary><b>Streamlit app and Docker</b></summary>
+<details><summary><b>Docker</b></summary>
 
-`aadd app` opens a UI with file upload, local-folder scan, bundled examples, a
-per-second probability timeline for every file, dataset-level statistics and
-CSV export. `docker build -t aadd . && docker run -p 8501:8501 aadd` does the
-same in a container.
+```bash
+docker build -t aadd .
+docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/report.html
+```
 
 </details>
 

@@ -121,7 +121,7 @@ def featurize_dir(
     }
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     np.savez(out_path, **out)
-    return {"n_chunks": int(len(X)), "n_files": len(files), "shape": list(X.shape[1:]), "path": str(out_path)}
+    return {"n_chunks": len(X), "n_files": len(files), "shape": list(X.shape[1:]), "path": str(out_path)}
 
 
 class ChunkArrayDataset(Dataset):
@@ -160,7 +160,7 @@ def split_by_speaker(ds: ChunkArrayDataset, val_fraction: float = 0.1, seed: int
     uniq = np.unique(sp)
     rng = np.random.RandomState(seed)
     rng.shuffle(uniq)
-    n_val = max(1, int(round(len(uniq) * val_fraction)))
+    n_val = max(1, round(len(uniq) * val_fraction))
     val_sp = set(uniq[:n_val].tolist())
     mask = np.array([s in val_sp for s in sp])
     return np.where(~mask)[0], np.where(mask)[0]
