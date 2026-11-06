@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aadd"
-version = "2.0.0"
+version = "3.1.0"
 description = "Automatic Audio Degradation Detection: per-second detection of noise, clipping, band-limiting, pitch/time artifacts in speech"
 readme = "README.md"
 license = { text = "MIT" }
@@ -26,6 +26,9 @@ dependencies = [
   "matplotlib>=3.7",
   "pandas>=2.0",
   "tqdm>=4.60",
+  "transformers>=4.40",   # v3 (Whisper encoder)
+  "soxr>=0.3",
+  "scipy>=1.10",
 ]
 
 [project.optional-dependencies]
@@ -41,8 +44,8 @@ aadd = "aadd.cli:main"
 Homepage = "https://github.com/gertelrina/aadd"
 Issues = "https://github.com/gertelrina/aadd/issues"
 
-[tool.setuptools]
-packages = ["aadd", "aadd.data"]
+[tool.setuptools.packages.find]
+include = ["aadd*"]
 
 [tool.ruff]
 line-length = 120

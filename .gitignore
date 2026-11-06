@@ -9,12 +9,12 @@ venv/
 .ruff_cache/
 .DS_Store
 # data & experiment artifacts (regenerate with `aadd make-data` / `aadd featurize`)
-data/
-feats/
+/data/
+/feats/
 runs/pred_*.csv
 *.npz
 *.onnx
 wandb/
 # weights live on the Hugging Face Hub (agertel/aadd)
-weights/
+/weights/
 *.pt
