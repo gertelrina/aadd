@@ -103,13 +103,13 @@ The example page embeds audio for the most degraded files and a few clean ones p
 folder (`--audio embed`); a report built next to your data plays every file from
 disk (`--audio path`, the default).
 
-| folder | files flagged | dominant detection |
+| folder | files flagged | dominant detection (% of audio time) |
 |---|---|---|
-| `voicebank_clean` (studio speech) | 1 % | — |
-| `voicebank_noisy` (same sentences + DEMAND noise) | 82 % | background noise, music-like babble |
-| `dns_reverb_clean` (reverberant speech) | 100 % | reverberation |
-| `dns_reverb_noisy` | 100 % | reverberation + noise |
-| `dns_real_recordings` (real noisy calls) | 97 % | background noise |
+| `voicebank_clean` (studio speech) | 0 % | — |
+| `voicebank_noisy` (same sentences + DEMAND noise) | 80 % | background noise 59 %, music 26 % (mostly the DEMAND living-room noise, which contains sustained tones) |
+| `dns_reverb_clean` (reverberant speech) | 100 % | reverberation 100 % |
+| `dns_reverb_noisy` | 100 % | reverberation 100 %, noise 86 % |
+| `dns_real_recordings` (real noisy calls) | 98 % | background noise 93 % |
 
 ```bash
 aadd scan my_dataset/ --model v3 --report my_dataset_report.html   # v3 weights are fetched from Hugging Face once
@@ -125,20 +125,20 @@ player, spectrogram and timeline.
 Example: the 2 248 public recordings from the [dataset report](#dataset-report),
 enhanced with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
 (MossFormerGAN_SE_16K, Apache-2.0) wherever v3 found noise, music or
-reverberation (1 262 files), then scanned again with the same model.
+reverberation (1 262 files), then both versions scanned with v3.1.
 [Open the interactive comparison](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_dark.png">
-  <img src="docs/img/compare_light.png" width="860" alt="aadd compare: degraded time 71% to 42%, per-class before/after bars">
+  <img src="docs/img/compare_light.png" width="860" alt="aadd compare: degraded time 71% to 44%, per-class before/after bars">
 </picture>
 
 | enhanced files | degraded time | what changed |
 |---|---|---|
-| VoiceBank + DEMAND noise (670) | 97 % → 2 % | noise 62 % → 0.2 %, music-like noise 49 % → 0.2 % |
-| DNS real recordings (289) | 98 % → 53 % | noise 94 % → 3 %, but codec artefacts 7 % → 14 %, low-pass 6 % → 10 % |
-| DNS reverberant + noise (150) | 100 % → 100 % | noise 77 % → 9 %, reverberation unchanged, codec artefacts 1 % → 32 % |
-| DNS reverberant, no noise (150) | 100 % → 100 % | reverberation unchanged, high-pass 3 % → 76 %, pitch-shift-like 2 % → 18 % |
+| VoiceBank + DEMAND noise (670) | 94 % → 1 % | noise 71 % → 0 %, music-like noise 32 % → 0 % |
+| DNS real recordings (289) | 98 % → 62 % | noise 95 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 23 % → 30 % |
+| DNS reverberant + noise (150) | 100 % → 100 % | noise 86 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
+| DNS reverberant, no noise (150) | 100 % → 100 % | reverberation unchanged, high-pass 10 % → 92 %, pitch-shift-like 1 % → 28 % |
 
 The enhancer removes noise very well, does not remove reverberation, and on
 reverberant speech introduces band-limiting and codec-like artefacts — the kind
@@ -241,26 +241,29 @@ inference, 3–5× faster end to end (measured below).
 
 ## Results
 
-### v3 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
+### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
 Real recordings it never saw in training (clip score = 95th percentile of frame
 probabilities):
 
-| set | class | ROC-AUC | recall at p ≥ 0.5 | false alarms on clean |
-|---|---|---|---|---|
-| VoiceBank-DEMAND test, 824 noisy + 824 clean twins | noise | 0.985 | 0.51 | 0.4 % |
-| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | 0.997 | 0.85 | 0.0 % |
-| DNS Challenge 2020 synthetic dev-test, 600 clips | reverberation | 1.000 | 1.00 | 0.0 % |
-| Dynamic-SUPERB noise detection | noise | 0.995 | 0.96 | 1.1 % |
-| Dynamic-SUPERB reverberation, small / medium / large room | reverberation | 0.995 / 1.000 / 0.998 | 0.97 / 1.00 / 0.96 | 0 % |
+| set | class | ROC-AUC | recall at p ≥ 0.5 | false alarms on clean | music detections (no music present) |
+|---|---|---|---|---|---|
+| VoiceBank-DEMAND test, 824 noisy vs 824 clean twins | noise | 0.992 | 0.60 | 0.0 % | 13.9 % of clips (v3.0: 21.1 %) |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | 0.998 | 0.91 | 0.0 % | 8.2 % (v3.0: 11.3 %) |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | reverberation | 1.000 | 1.00 | 0.0 % | — |
+| Dynamic-SUPERB noise detection (VCTK + MUSAN) | noise | 0.992 | 0.96 | 2.2 % | 0.5 % |
+| Dynamic-SUPERB reverberation, small / medium / large room | reverberation | 0.994 / 1.000 / 0.996 | 0.98 / 1.00 / 0.97 | 0 % | 0–1.5 % |
+
+v3.1 (2026-11-06) is v3.0 fine-tuned with real environmental noise (FSD50K, CC0 / CC BY) and crowd babble: music false alarms on real café / street / bus noise dropped 2–2.5× (VoiceBank-DEMAND per noise type: café 41 % → 16 %, square 49 % → 25 %, bus 39 % → 18 %), noise recall rose. `--model v3` loads v3.1; `--model v3.0` the first release.
 
 Held-out synthetic tests with up to three overlapping degradations (all 12 classes):
 
 | test set | frame macro-AP (20 ms) | 1-s macro-F1 | clip macro-AUC |
 |---|---|---|---|
-| English, LibriSpeech test-clean speakers | 0.955 | 0.915 | 0.988 |
-| Russian, Russian LibriSpeech test speakers | 0.959 | 0.883 | 0.986 |
-| English, real measured room impulse responses | 0.951 | 0.909 | 0.989 |
+| English (LibriSpeech test-clean), 3 000 × 8 s | 0.955 | 0.905 | 0.989 |
+| Russian (Russian LibriSpeech test), 3 000 × 8 s | 0.960 | 0.881 | 0.987 |
+| English, real measured RIRs | 0.954 | 0.902 | 0.991 |
+| English, MIT IR survey RIRs | 0.946 | 0.883 | 0.990 |
 
 v3 also catches what the earlier models were never trained to see: the
 repository's own "clean" reference clip `examples/degradations/orig.flac` turns out

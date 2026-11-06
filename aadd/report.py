@@ -98,10 +98,11 @@ for(const f of D.files){f.p=b64(f.q);if(f.fq)f.fp=b64(f.fq);}
 const st={thr:Math.round(D.threshold*100),tol:0,on:D.classes.map(()=>true),sort:'worst',rows:25};
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct=(x,d=0)=>(100*x).toFixed(d)+'%', hrs=s=>s>=3600?(s/3600).toFixed(1)+' h':(s/60).toFixed(0)+' min';
+const qthr=t=>t>=1?256:Math.round(t*255);  // 8-bit probabilities; 1.00 means "never"
 const seq=v=>v<=0.001?'var(--seq-0)':`var(--seq-${Math.min(7,1+Math.floor(v*7))})`;
 
 function compute(thr,tol,on,light){
-  const T=Math.round(thr*255);
+  const T=qthr(thr);
   const R={secs:0,deg:0,dur:0,keepDur:0,keepFiles:0,cls:new Float64Array(C),clsFiles:new Float64Array(C),co:new Float64Array(C*C),sub:{},files:[],hist:new Array(10).fill(0)};
   const act=[];
   for(const f of D.files){
@@ -183,7 +184,7 @@ function subs(R){
 }
 function strip(f){
   const n=f.n, step=Math.max(1,Math.ceil(n/60)), T=st.thr/100; let out='';
-  for(let k=0;k<n;k+=step){let v=0;const labs=new Set();for(let i=k;i<Math.min(n,k+step);i++)for(let j=0;j<C;j++){if(!st.on[j])continue;const p=f.p[i*C+j]/255;if(p>v)v=p;if(p>=T)labs.add(PR[j]);}
+  for(let k=0;k<n;k+=step){let v=0;const labs=new Set();for(let i=k;i<Math.min(n,k+step);i++)for(let j=0;j<C;j++){if(!st.on[j])continue;const p=f.p[i*C+j]/255;if(p>v)v=p;if(p*255>=qthr(T))labs.add(PR[j]);}
     out+=`<i data-tip="${k}–${Math.min(n,k+step)} s: ${esc([...labs].join(', ')||'clean')}" style="background:${seq(v)}"></i>`;}
   return `<div class=strip>${out}</div>`;
 }
@@ -203,7 +204,7 @@ function worst(R){
 let INSP_N=0;
 function inspector(el,f,o){
   // o: {T: threshold, on: [bool per class], C, PR, title}
-  const id='i'+(INSP_N++), C_=o.C, PR_=o.PR, T=o.T, useF=!!f.fp, hop=useF?f.fh:1, n=useF?f.fn:f.n, P=useF?f.fp:f.p, dur=Math.max(f.d,n*hop*0.999);
+  const id='i'+(INSP_N++), C_=o.C, PR_=o.PR, T=o.T, QT=qthr(o.T), useF=!!f.fp, hop=useF?f.fh:1, n=useF?f.fn:f.n, P=useF?f.fp:f.p, dur=Math.max(f.d,n*hop*0.999);
   const cls=[...Array(C_).keys()].filter(j=>o.on[j]);
   const W=1040, lw=170, WV=56, MT=60, MH=112, top=f.a?MT+MH+8:8, rh=22, pw=W-lw-10, H=top+rh*cls.length+28;
   const cols=Math.min(n,1500), k=n/cols, X=t=>lw+pw*t/dur;
@@ -214,11 +215,11 @@ function inspector(el,f,o){
     `<text x="${lw-4}" y="${MT+9}" text-anchor="end" font-size="10">8k</text><text x="${lw-4}" y="${MT+MH}" text-anchor="end" font-size="10">0 Hz</text>`;
   cls.forEach((j,r)=>{const y=top+r*rh;let any=false;
     for(let c=0;c<cols;c++){let v=0;for(let i=Math.floor(c*k);i<Math.max(Math.floor((c+1)*k),Math.floor(c*k)+1);i++)v=Math.max(v,P[i*C_+j]/255);
-      if(v>=T)any=true; if(v>0.02)s+=`<rect x="${(lw+pw*c/cols).toFixed(2)}" y="${y+2}" width="${(pw/cols+0.4).toFixed(2)}" height="${rh-4}" fill="${seq(v)}" data-tip="${esc(PR_[j])} · ${(c*k*hop).toFixed(1)} s · p=${v.toFixed(2)}"/>`;}
+      if(v*255>=QT)any=true; if(v>0.02)s+=`<rect x="${(lw+pw*c/cols).toFixed(2)}" y="${y+2}" width="${(pw/cols+0.4).toFixed(2)}" height="${rh-4}" fill="${seq(v)}" data-tip="${esc(PR_[j])} · ${(c*k*hop).toFixed(1)} s · p=${v.toFixed(2)}"/>`;}
     s+=`<text x="${lw-10}" y="${y+rh/2+4}" text-anchor="end" class="${any?'lbl':''}" font-weight="${any?600:400}">${esc(PR_[j])}</text><line x1="${lw}" x2="${W-10}" y1="${y+rh}" y2="${y+rh}" stroke="var(--grid)"/>`;});
   for(let t=0;t<=dur;t+=Math.max(1,Math.ceil(dur/12)))s+=`<text x="${X(t)}" y="${H-8}" text-anchor="middle">${t}s</text>`;
   s+=`<line id=${id}-ph x1="${lw}" x2="${lw}" y1="0" y2="${H-22}" stroke="var(--text-primary)" stroke-width="1.5"/></svg>`;
-  const ivs=[];cls.forEach(j=>{const run=[];let a=-1,m=0;for(let i=0;i<=n;i++){const v=i<n?P[i*C_+j]/255:0;if(v>=T){if(a<0)a=i;m=Math.max(m,v)}else if(a>=0){run.push([a*hop,i*hop,m]);a=-1;m=0}}
+  const ivs=[];cls.forEach(j=>{const run=[];let a=-1,m=0;for(let i=0;i<=n;i++){const v=i<n?P[i*C_+j]/255:0;if(v*255>=QT){if(a<0)a=i;m=Math.max(m,v)}else if(a>=0){run.push([a*hop,i*hop,m]);a=-1;m=0}}
     const mg=[];for(const r of run){const l=mg[mg.length-1];if(l&&r[0]-l[1]<0.5){l[1]=r[1];l[2]=Math.max(l[2],r[2])}else mg.push([...r])}
     for(const r of mg)ivs.push([j,...r]);});
   ivs.sort((x,y)=>x[1]-y[1]);

@@ -48,9 +48,14 @@ REGISTRY = {
         "description": "EfficientNet-B0 on direct log-mel tensors (1x128x63), same labels, 3-5x faster than v1.",
     },
     "v3": {
+        "file": "aadd_v3_1_whisper_small_frames.pt",
+        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v3_1_whisper_small_frames.pt",
+        "description": "v3.1: Whisper-small encoder, 12 realistic classes per 20 ms; fewer music false alarms on real babble.",
+    },
+    "v3.0": {
         "file": "aadd_v3_whisper_small_frames.pt",
         "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v3_whisper_small_frames.pt",
-        "description": "Whisper-small encoder, 12 realistic degradation classes per 20 ms frame (noise, music, reverb, codec, ...).",
+        "description": "First v3 release (2026-11-05); superseded by v3.1.",
     },
     "v3-lite": {
         "file": "aadd_v3_lite_crnn_frames.pt",

@@ -35,6 +35,7 @@ def _common_js() -> str:
 const b64=q=>{const b=atob(q);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct=(x,d=0)=>(100*x).toFixed(d)+'%';
+const qthr=t=>t>=1?256:Math.round(t*255);
 const seq=v=>v<=0.001?'var(--seq-0)':`var(--seq-${Math.min(7,1+Math.floor(v*7))})`;
 """
     return helpers + JS[a:b]
@@ -49,7 +50,7 @@ const st={thr:Math.round(A.threshold*100),on:A.classes.map(()=>true)};
 const ROWS=window.AADD_ROWS||15;
 function fileStats(f,T){const n=f.n,c=new Float64Array(C);let deg=0;for(let i=0;i<n;i++){let any=false;for(let j=0;j<C;j++){if(st.on[j]&&f.p[i*C+j]>=T){c[j]++;any=true}}if(any)deg++}return {n,deg,c}}
 function compute(){
-  const T=Math.round(st.thr/100*255);const R={secs:0,b:{deg:0,cls:new Float64Array(C),files:0},a:{deg:0,cls:new Float64Array(C),files:0},sub:{},pairs:[]};
+  const T=qthr(st.thr/100);const R={secs:0,b:{deg:0,cls:new Float64Array(C),files:0},a:{deg:0,cls:new Float64Array(C),files:0},sub:{},pairs:[]};
   for(const [i,k] of PAIRS){const fb=A.files[i],fa=B.files[k],sb=fileStats(fb,T),sa=fileStats(fa,T),n=Math.min(sb.n,sa.n);
     R.secs+=n;R.b.deg+=sb.deg;R.a.deg+=sa.deg;if(sb.deg)R.b.files++;if(sa.deg)R.a.files++;
     const s=R.sub[fb.s]||(R.sub[fb.s]={secs:0,files:0,b:new Float64Array(C),a:new Float64Array(C),bd:0,ad:0});s.secs+=n;s.files++;s.bd+=sb.deg;s.ad+=sa.deg;
