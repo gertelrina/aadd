@@ -122,27 +122,30 @@ side: every class before and after, each folder, the files that improved most,
 the files that gained new problems, and both versions of a file with their own
 player, spectrogram and timeline.
 
-Example: the 2 248 public recordings from the [dataset report](#dataset-report),
-enhanced with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
-(MossFormerGAN_SE_16K, Apache-2.0) wherever v3 found noise, music or
-reverberation (1 262 files), then both versions scanned with v3.1.
+Example: the 2 248 public recordings from the [dataset report](#dataset-report).
+v3.1 flagged background noise or music in 1 096 of them; only those were enhanced
+with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
+(MossFormerGAN_SE_16K, Apache-2.0), then all files were scanned again with v3.1.
 [Open the interactive comparison](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_dark.png">
-  <img src="docs/img/compare_light.png" width="860" alt="aadd compare: degraded time 71% to 44%, per-class before/after bars">
+  <img src="docs/img/compare_light.png" width="860" alt="aadd compare: degraded time 71% to 44% after enhancing noisy files, per-class before/after bars">
 </picture>
 
 | enhanced files | degraded time | what changed |
 |---|---|---|
-| VoiceBank + DEMAND noise (670) | 94 % → 1 % | noise 71 % → 0 %, music-like noise 32 % → 0 % |
-| DNS real recordings (289) | 98 % → 62 % | noise 95 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 23 % → 30 % |
-| DNS reverberant + noise (150) | 100 % → 100 % | noise 86 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
-| DNS reverberant, no noise (150) | 100 % → 100 % | reverberation unchanged, high-pass 10 % → 92 %, pitch-shift-like 1 % → 28 % |
+| VoiceBank + DEMAND noise (658) | 97 % → 1 % | noise 73 % → 0 %, music-like noise 32 % → 0 % |
+| DNS real recordings (286) | 98 % → 61 % | noise 96 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 22 % → 29 % |
+| DNS reverberant + noise (148) | 100 % → 100 % | noise 87 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
+| whole set (2 248 files) | 71 % → 44 % | files with any degradation 1 254 → 539 |
 
-The enhancer removes noise very well, does not remove reverberation, and on
-reverberant speech introduces band-limiting and codec-like artefacts — the kind
-of side effect a single MOS number hides. Enhance only noisy files:
+The enhancer removes noise very well but does not remove reverberation, and on
+reverberant speech it adds codec-like and pitch artefacts — the kind of side
+effect a single MOS number hides. In an earlier run that also enhanced the 150
+reverberant-only DNS files, high-pass artefacts rose from 10 % to 92 % of their
+time and pitch-shift-like artefacts from 1 % to 28 %, so reverberant files are
+best left alone or sent to a dereverberation model. The recommended loop:
 
 ```bash
 aadd scan raw/ --model v3 --json before.json
@@ -151,11 +154,11 @@ aadd scan enhanced/ --model v3 --json after.json
 aadd compare before.json after.json -o compare.html --audio embed
 ```
 
-<details><summary>Both versions of a reverberant file, before and after enhancement</summary>
+<details><summary>Both versions of a reverberant, noisy file, before and after enhancement</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_pair_dark.png">
-  <img src="docs/img/compare_pair_light.png" width="860" alt="One file before and after enhancement: reverberation stays, high-pass, codec and pitch-shift artefacts appear">
+  <img src="docs/img/compare_pair_light.png" width="860" alt="One file before and after enhancement: noise removed, reverberation stays, codec and pitch-shift artefacts appear">
 </picture>
 
 </details>
