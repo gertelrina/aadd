@@ -23,20 +23,23 @@
 </p>
 <p align="center"><sub>This is the file view of the <a href="#dataset-report">dataset report</a>, recorded as is. The clip is held-out LibriSpeech speech with five degradations inserted at known times: noise 1.5–4.0 s, reverberation 5.0–7.5 s, clipping 8.5–10.0 s, MP3 at 8 kbit/s 10.5–12.5 s, clicks 11.0–13.5 s. v3 finds all five.</sub></p>
 
-Per-second detection of common audio degradations in speech recordings:
-**Gaussian noise, pitch shift, time stretch, clipping, low-pass and high-pass
-filtering** (plus a *circular shift* class, see [Limitations](#limitations)).
-Given a file or a folder, AADD tells you *which* seconds are degraded, *how*,
-and how much of a dataset is affected — a quality gate for ASR / TTS training
-data, podcast and call-centre pipelines.
+AADD finds **which degradation is present in speech, and where, every 20 ms**:
+background noise, music, reverberation, clipping, low-pass / narrow band,
+high-pass, codec artefacts, packet loss, mains hum, clicks, pitch shift and time
+stretch, several at once, in English and Russian. Point it at a file or a whole
+dataset and get per-file verdicts, a per-second timeline and an interactive HTML
+report with how much clean audio you keep at any threshold — a quality gate for
+ASR / TTS training data, call-centre and podcast pipelines, and a way to check
+what a speech enhancer really did.
 
-Version 2 is an installable package with a CLI, a tested inference API, a
-reproducible data pipeline and a faster model; the first model (2025) ships
-unchanged as `v1`.
+The current model is **v3.1** (Whisper-small encoder, weights on Hugging Face,
+downloaded on first use). The earlier per-second models v1 and v2 for seven
+synthetic degradations remain available.
 
 ```
-$ aadd scan examples/speech/61-70968-0000_4.flac
-examples/speech/61-70968-0000_4.flac   4.0s   2/4 degraded s   ClippingDistortion 1.00, HighPassFilter 1.00
+$ aadd scan examples/speech/61-70968-0000_4.flac examples/degradations/orig.flac --model v3
+examples/speech/61-70968-0000_4.flac   4.0s   4/4 degraded s   clipping 1.00, highpass 1.00, hum 1.00
+examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpass 0.95, time_stretch 0.59
 ```
 
 | | v1 | v2 | **v3.1** |
