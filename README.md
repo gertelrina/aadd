@@ -38,7 +38,7 @@ what a speech enhancer really did.
 > Move the threshold and see how much clean audio you keep, switch classes off, rank files worst- or best-first,
 > **listen to any file** with its spectrogram and 100-ms class timeline, and download the list of clean files.
 >
-> **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) · make your own: `aadd scan my_dataset/ --report report.html`
+> **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) · make your own: `aadd scan my_dataset/ --report report.html`
 
 ## v3: what it builds on
 
@@ -119,7 +119,9 @@ aadd scan my_dataset/ --model v3 --report my_dataset_report.html   # v3 weights 
 
 ## Before / after: did the cleaning help?
 
-<details><summary>Speech enhancement measured with AADD: ClearerVoice on 1 096 noisy files</summary>
+Example with the open speech-enhancement toolkit [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) (Alibaba Tongyi Lab, Apache-2.0).
+
+<details><summary>Speech enhancement measured with AADD: <a href="https://github.com/modelscope/ClearerVoice-Studio">ClearerVoice-Studio</a> on 1 096 noisy files</summary>
 
 `aadd compare before.json after.json` puts two scans of the same files side by
 side: every class before and after, each folder, the files that improved most,

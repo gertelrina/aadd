@@ -1,5 +1,7 @@
 """Enhance only the files AADD flagged, with ClearerVoice-Studio (Apache-2.0); copy the rest unchanged.
 
+ClearerVoice-Studio: https://github.com/modelscope/ClearerVoice-Studio
+
     pip install clearvoice            # in a separate environment: it pins numpy<2, soundfile 0.12, opencv
     aadd scan raw/ --model v3 --json before.json
     python scripts/enhance_with_clearervoice.py before.json raw/ enhanced/ [--model MossFormerGAN_SE_16K] [--classes noise,music]
