@@ -11,7 +11,7 @@
 
 [![CI](https://github.com/gertelrina/aadd/actions/workflows/ci.yml/badge.svg)](https://github.com/gertelrina/aadd/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Live demo: dataset report](https://img.shields.io/badge/live%20demo-dataset%20report-2a78d6?style=flat&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)
+[![Demo: dataset report](https://img.shields.io/badge/demo-dataset%20report-2a78d6?style=flat&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)
 
 **Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Before / after](#before--after-did-the-cleaning-help) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
@@ -33,6 +33,13 @@ report with how much clean audio you keep at any threshold — a quality gate fo
 ASR / TTS training data, call-centre and podcast pipelines, and a way to check
 what a speech enhancer really did.
 
+> [!TIP]
+> **Demo — interactive dataset report.** 2 248 public recordings (VoiceBank-DEMAND, DNS Challenge 2020) scanned by v3.1.
+> Move the threshold and see how much clean audio you keep, switch classes off, rank files worst- or best-first,
+> **listen to any file** with its spectrogram and 100-ms class timeline, and download the list of clean files.
+>
+> **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) · make your own: `aadd scan my_dataset/ --report report.html`
+
 The current model is **v3.1** (Whisper-small encoder, weights on Hugging Face,
 downloaded on first use). The earlier models v1 and v2 (one prediction per second, seven
 synthetic degradations) remain available.
@@ -52,32 +59,23 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 
 ² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#results).
 
-> [!TIP]
-> **Live example — interactive dataset report.** 2 248 public recordings (VoiceBank-DEMAND, DNS Challenge 2020) scanned by v3.1.
-> Move the threshold and see how much clean audio you keep, switch classes off, rank files worst- or best-first,
-> **listen to any file** with its spectrogram and 100-ms class timeline, and download the list of clean files.
->
-> **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) · make your own: `aadd scan my_dataset/ --report report.html`
-
-<p align="center">
-  <a href="https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_dark.png">
-      <img src="docs/img/report_light.png" width="860" alt="AADD dataset report: threshold and class controls, clean audio kept, per-class shares, per-file histogram">
-    </picture>
-  </a>
-</p>
-<p align="center"><sub>Click the picture to open the live report. It is a single HTML file produced by <code>aadd report</code>; no server needed.</sub></p>
-
 ## v3: what it builds on
 
-<details><summary>v3 plan: 12 realistic degradation classes every 20 ms, English and Russian, and the nine works it combines</summary>
+The closest research already shows how to find *which* degradation is in a
+recording and *where*: Amazon's per-second artefact classifier (Higham et al.,
+2022), per-degradation CNN detectors (Saishu et al., 2021), frame-level localisers
+of partial distortions (DAMOS and Speech Quality Embeddings, 2026). But none of
+these papers released code or weights, and each covers only part of the problem:
+a few classes, one language, utterance-level labels or no realistic data. In
+practice people fall back on a single MOS score from NISQA or DNSMOS, which says
+*how bad* a recording is, never *what* is wrong or *where*.
 
-v3 (see [docs/v3_plan.md](docs/v3_plan.md); weights on [Hugging Face](https://huggingface.co/agertel/aadd)) replaces the seven
-`audiomentations` classes with **12 realistic degradations**, labels them **every
-20 ms** instead of every second, allows **several at once**, and covers **English
-and Russian**. No single paper does all of this with open weights; v3 combines the
-pieces below.
+v3 takes the strongest idea from each of these works and puts them into one open
+model under MIT: 12 realistic degradation classes, labels every 20 ms, several
+degradations at once, English and Russian, built only from openly licensed data
+and weights, with the code, the data generator and the weights published.
+
+<details><summary>The nine works v3 combines, and what it takes from each</summary>
 
 | work | what v3 takes from it | why it matters |
 |---|---|---|
@@ -101,6 +99,8 @@ Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
 
 ## Dataset report
 
+<details><summary>What the interactive report shows, the example in numbers, and the file view</summary>
+
 `aadd scan DIR --report report.html` (or `aadd report scan.json`) writes one
 self-contained, **interactive** HTML page for the whole dataset. Move the
 detection threshold, set how many degraded seconds a file may have and still be
@@ -110,9 +110,8 @@ is, which problems come together, each folder, a file table ranked worst-first o
 timeline strip per file. Click any file to **listen to it** with a waveform and a 100 ms class timeline that follows playback (click the timeline or a detected interval to jump there). One click exports the list of kept files as CSV. Light and dark themes,
 no external assets.
 
-The screenshot [at the top](#aadd--automatic-audio-degradation-detection) shows this page with threshold 0.80, files kept with ≤ 20 % degraded seconds and music not counted: v3.1 on 2 248 public recordings it never saw —
-VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test.
-[Open the full interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html).
+The [demo](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html) is this page for v3.1 on 2 248 public recordings it never saw:
+VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test. Below is the file view.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_inspector_dark.png">
@@ -135,7 +134,11 @@ disk (`--audio path`, the default).
 aadd scan my_dataset/ --model v3 --report my_dataset_report.html   # v3 weights are fetched from Hugging Face once
 ```
 
+</details>
+
 ## Before / after: did the cleaning help?
+
+<details><summary>Speech enhancement measured with AADD: ClearerVoice on 1 096 noisy files</summary>
 
 `aadd compare before.json after.json` puts two scans of the same files side by
 side: every class before and after, each folder, the files that improved most,
@@ -180,6 +183,8 @@ aadd compare before.json after.json -o compare.html --audio embed
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_pair_dark.png">
   <img src="docs/img/compare_pair_light.png" width="860" alt="One file before and after enhancement: noise removed, reverberation stays, codec and pitch-shift artefacts appear">
 </picture>
+
+</details>
 
 </details>
 
@@ -267,6 +272,8 @@ inference, 3–5× faster end to end (measured below).
 
 ## Results
 
+<details><summary>All models compared; v3.1 on real recordings and held-out tests; v1 and v2 on their synthetic test</summary>
+
 ### All models at a glance
 
 | model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean) | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple GPU (MPS)¹ |
@@ -286,7 +293,7 @@ recordings (noise recall 1.00, precision 0.32). Real-recording scores for v1/v2 
 their Gaussian-noise output; clip score = 95th percentile over time for all models.
 Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](runs/eval_v3_1.json).
 
-¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table under *Speed* below.
+¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table in [runs/README.md](runs/README.md#speed-v1-v2-and-v31-on-the-same-300-files).
 
 ### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
@@ -331,93 +338,9 @@ numbers are in [`runs/`](runs/).
 | model | input | F1 macro (8 classes) | F1 macro (7 degradations) | F1 micro | exact match per second | file-level Spearman | ms per audio second, CPU / MPS |
 |---|---|---|---|---|---|---|---|
 | `v1` (2025) | PNG 310×385 | 0.831 | 0.818 | 0.908 | 0.906 | 0.932 | 133 / 14.4 |
-| `v2` (this release) | log-mel 1×128×63 | **0.919** | **0.916** | **0.930** | **0.927** | **0.938** | 39 / 3.1 |
+| `v2` | log-mel 1×128×63 | **0.919** | **0.916** | **0.930** | **0.927** | **0.938** | 39 / 3.1 |
 
-<details><summary><b>Per-class F1 (threshold 0.5)</b></summary>
-
-| class | support (seconds) | `v1` | `v2` | DSP baseline (best F1) |
-|---|---|---|---|---|
-| AddGaussianNoise | 6,384 | **1.000** | 0.999 | 0.999 |
-| PitchShift | 6,523 | **0.934** | 0.912 | 0.113 |
-| TimeStretch | 6,439 | 0.941 | **0.968** | 0.714 |
-| Shift | 6,522 | 0.000 | **0.726** | 0.120 |
-| ClippingDistortion | 6,417 | 0.864 | 0.818 | **0.961** |
-| LowPassFilter | 6,436 | 0.991 | **0.997** | 0.924 |
-| HighPassFilter | 6,606 | **0.992** | 0.992 | 0.971 |
-| None | 63,609 | 0.926 | **0.942** | — |
-
-</details>
-
-<details><summary><b>Per-class detail</b></summary>
-
-| class | `v1` ROC-AUC | `v2` ROC-AUC | DSP ROC-AUC | `v2` precision | `v2` recall | `v2` AP |
-|---|---|---|---|---|---|---|
-| AddGaussianNoise | **1.000** | 1.000 | 1.000 | 0.999 | 1.000 | 1.000 |
-| PitchShift | **1.000** | 1.000 | 0.500 | 0.839 | 0.998 | 0.993 |
-| TimeStretch | 0.995 | **0.996** | 0.790 | 0.989 | 0.948 | 0.984 |
-| Shift | 0.605 | **0.975** | 0.510 | 0.692 | 0.763 | 0.795 |
-| ClippingDistortion | **0.973** | 0.971 | 0.963 | 0.784 | 0.856 | 0.880 |
-| LowPassFilter | **1.000** | 1.000 | 0.995 | 0.999 | 0.996 | 1.000 |
-| HighPassFilter | **1.000** | 1.000 | 0.999 | 0.984 | 1.000 | 1.000 |
-| None | 0.918 | **0.982** | — | 0.960 | 0.925 | 0.983 |
-
-</details>
-
-<details><summary><b>File level (15 720 files)</b></summary>
-
-| | `v1` | `v2` |
-|---|---|---|
-| Spearman(true number of degraded seconds, predicted `aadd_count`) | 0.932 | 0.938 |
-| Pearson | 0.941 | 0.956 |
-| mean absolute error of the count, seconds | 0.552 | 0.404 |
-
-</details>
-
-<details><summary><b>`v2` confusion matrix (argmax over the 8 outputs; rows = true, columns = predicted)</b></summary>
-
-| true \ pred | Noise | Pitch | Stretch | Shift | Clip | LPF | HPF | None |
-|---|---|---|---|---|---|---|---|---|
-| Noise | **6,382** | 0 | 0 | 0 | 1 | 0 | 0 | 1 |
-| Pitch | 0 | **6,506** | 5 | 0 | 0 | 0 | 0 | 12 |
-| Stretch | 0 | 121 | **6,090** | 9 | 10 | 0 | 1 | 208 |
-| Shift | 0 | 65 | 5 | **5,008** | 68 | 0 | 9 | 1,367 |
-| Clip | 1 | 9 | 2 | 36 | **5,496** | 0 | 0 | 873 |
-| LPF | 0 | 3 | 1 | 5 | 0 | **6,409** | 0 | 18 |
-| HPF | 0 | 0 | 0 | 0 | 0 | 0 | **6,606** | 0 |
-| None | 3 | 972 | 47 | 2,190 | 1,475 | 8 | 94 | **58,820** |
-
-</details>
-
-<details><summary><b>Speed: v1, v2 and v3.1 on the same 300 files</b></summary>
-
-| | `v1` | `v2` | `v3.1` |
-|---|---|---|---|
-| CPU, per second of audio | 132.9 ms (8× real time) | 39.4 ms (25× real time) | 23.3 ms (43× real time) |
-| Apple GPU (MPS), per second of audio | 14.4 ms (69× real time) | 3.1 ms (324× real time) | 6.5 ms (153× real time) |
-| CPU, one hour of audio | 478 s | 142 s | 84 s |
-| Apple GPU (MPS), one hour of audio | 52 s | 11 s | 24 s |
-
-Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM, macOS 15.7.4, Python 3.13.3, PyTorch 2.15.0 (6 CPU threads). Data: first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC). Method: one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded. v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger.
-
-</details>
-
-<details><summary><b>How to read these numbers</b> (why Shift, clipping and time stretch behave as they do)</summary>
-
-* `v2` is trained on the same protocol and data size as `v1`; the gains come from
-  the direct log-mel input (finer time resolution: hop 256 vs 512), SpecAugment
-  masking and proper model selection, not from more data.
-* `Shift` (a circular roll of the samples inside the second) is invisible to `v1`
-  (F1 0.000, which pulls its macro-F1 far below micro-F1). `v2` detects it (F1 0.73, AUC 0.98) through the seam the roll leaves in the
-  waveform: a plain `np.roll` without any fade is flagged in 88 % of clean seconds.
-  It is a discontinuity detector, not a "shift" detector; treat it as such.
-* `ClippingDistortion` is drawn with a percentile threshold in 0–20 %; near 0 %
-  it leaves the signal untouched, so part of that class is unlearnable by
-  construction. The one-line DSP clipping detector beats both CNNs here.
-* `TimeStretch` with rate > 1 is zero-padded back to 1 s, so part of that class
-  is detected through the silent tail rather than the stretch itself.
-* The DSP baselines show which classes do *not* need a neural network: noise,
-  band-limiting and clipping are solved by one-line detectors; pitch shift is
-  where the CNN earns its keep.
+Per-class F1, ROC-AUC, file-level numbers, the v2 confusion matrix, the speed table and notes on reading these numbers: [runs/README.md](runs/README.md).
 
 </details>
 
