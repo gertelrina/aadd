@@ -45,7 +45,7 @@ out = []
 
 # 1. headline
 out += [
-    "### 📋 v1 vs v2 at a glance",
+    "### v1 vs v2 at a glance",
     "",
     "| model | input | F1 macro (8 classes) | F1 macro (7 degradations) | F1 micro | exact match per second | file-level Spearman | ms per audio second, CPU / MPS |",
     "|---|---|---|---|---|---|---|---|",

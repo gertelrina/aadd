@@ -13,8 +13,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Demo: dataset report](https://img.shields.io/badge/demo-dataset%20report-2a78d6?style=flat&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)
 
-**🧭 Contents:** [🧩 v3](#-v3-what-it-builds-on) · [📊 Dataset report](#-dataset-report) · [🔁 Before / after](#-before--after-did-the-cleaning-help) · [📦 Install](#-install) · [🧠 Models](#-models) · [🚀 Usage](#-usage) · [📈 Results](#-results) · [🔧 Reproducing](#-reproducing--training-on-your-own-data) · [🚧 Limitations](#-limitations) · [📁 Layout](#-repository-layout) · [📝 Citation](#-citation)  
-**📚 Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
+**Contents:** [v3](#-v3-what-it-builds-on) · [Dataset report](#-dataset-report) · [Before / after](#-before--after-did-the-cleaning-help) · [Install](#-install) · [Models](#-models) · [Usage](#-usage) · [Results](#-results) · [Reproducing](#-reproducing--training-on-your-own-data) · [Limitations](#-limitations) · [Layout](#-repository-layout) · [Citation](#-citation)  
+**Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center">
   <picture>
@@ -26,19 +26,19 @@
 
 AADD finds **which degradation is present in speech, and where, every 20 ms**.
 
-* 🔎 **12 degradations**, several at once: 🌫️ background noise, 🎵 music, 🏛️ reverberation,
-  📢 clipping, 🔉 low-pass / narrow band, 🔈 high-pass, 🗜️ codec artefacts, 📶 packet loss,
-  ⚡ mains hum, 💥 clicks, 🎚️ pitch shift, ⏩ time stretch.
-* 🌍 **Languages:** English and Russian.
-* 📤 **Output:** point it at a file or a whole dataset and get per-file verdicts, a timeline
+* **12 degradations**, several at once: background noise, music, reverberation,
+  clipping, low-pass / narrow band, high-pass, codec artefacts, packet loss,
+  mains hum, clicks, pitch shift, time stretch.
+* **Languages:** English and Russian.
+* **Output:** point it at a file or a whole dataset and get per-file verdicts, a timeline
   down to 20 ms and an interactive HTML report with how much clean audio you keep at any threshold.
-* 🎯 **Use it for:** a quality gate for ASR / TTS training data, call-centre and podcast
+* **Use it for:** a quality gate for ASR / TTS training data, call-centre and podcast
   pipelines, and checking what a speech enhancer really did.
 
 > [!TIP]
-> ✨ **Demo — interactive dataset report.** 2 248 public recordings (VoiceBank-DEMAND, DNS Challenge 2020) scanned by v3.1.
+> **Demo — interactive dataset report.** 2 248 public recordings (VoiceBank-DEMAND, DNS Challenge 2020) scanned by v3.1.
 > Move the threshold and see how much clean audio you keep, switch classes off, rank files worst- or best-first,
-> 🎧 **listen to any file** with its spectrogram and 100-ms class timeline, and ⬇️ download the list of clean files.
+> **listen to any file** with its spectrogram and 100-ms class timeline, and download the list of clean files.
 >
 > **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) · make your own: `aadd scan my_dataset/ --report report.html`
 
@@ -47,18 +47,18 @@ AADD finds **which degradation is present in speech, and where, every 20 ms**.
 The closest research already shows how to find *which* degradation is in a
 recording and *where*: Amazon's per-second artefact classifier (Higham et al.,
 2022), per-degradation CNN detectors (Saishu et al., 2021), frame-level localisers
-of partial distortions (DAMOS and Speech Quality Embeddings, 2026). But 🔒 none of
+of partial distortions (DAMOS and Speech Quality Embeddings, 2026). But none of
 these papers released code or weights, and each covers only part of the problem:
 a few classes, one language, utterance-level labels or no realistic data. In
 practice people fall back on a single MOS score from NISQA or DNSMOS, which says
 *how bad* a recording is, never *what* is wrong or *where*.
 
-🔓 v3 takes the strongest idea from each of these works and puts them into one open
+v3 takes the strongest idea from each of these works and puts them into one open
 model under MIT: 12 realistic degradation classes, labels every 20 ms, several
 degradations at once, English and Russian, built only from openly licensed data
 and weights, with the code, the data generator and the weights published.
 
-<details><summary>📚 The nine works v3 combines, and what it takes from each</summary>
+<details><summary>The nine works v3 combines, and what it takes from each</summary>
 
 | work | what v3 takes from it | why it matters |
 |---|---|---|
@@ -82,7 +82,7 @@ Dynamic-SUPERB for out-of-domain evaluation. Details and licences:
 
 ## 📊 Dataset report
 
-<details><summary>🔍 What the interactive report shows, the example in numbers, and the file view</summary>
+<details><summary>What the interactive report shows, the example in numbers, and the file view</summary>
 
 `aadd scan DIR --report report.html` (or `aadd report scan.json`) writes one
 self-contained, **interactive** HTML page for the whole dataset. Move the
@@ -107,7 +107,7 @@ disk (`--audio path`, the default).
 
 | folder | files flagged | dominant detection (% of audio time) |
 |---|---|---|
-| `voicebank_clean` (studio speech) | 0 % ✅ | — |
+| `voicebank_clean` (studio speech) | 0 % | — |
 | `voicebank_noisy` (same sentences + DEMAND noise) | 80 % | background noise 59 %, music 26 % (mostly the DEMAND living-room noise, which contains sustained tones) |
 | `dns_reverb_clean` (reverberant speech) | 100 % | reverberation 100 % |
 | `dns_reverb_noisy` | 100 % | reverberation 100 %, noise 86 % |
@@ -123,7 +123,7 @@ aadd scan my_dataset/ --model v3 --report my_dataset_report.html   # v3 weights 
 
 Example with the open speech-enhancement toolkit [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) (Alibaba Tongyi Lab, Apache-2.0).
 
-<details><summary>🎧 Speech enhancement measured with AADD: <a href="https://github.com/modelscope/ClearerVoice-Studio">ClearerVoice-Studio</a> on 1 096 noisy files</summary>
+<details><summary>Speech enhancement measured with AADD: <a href="https://github.com/modelscope/ClearerVoice-Studio">ClearerVoice-Studio</a> on 1 096 noisy files</summary>
 
 `aadd compare before.json after.json` puts two scans of the same files side by
 side: every class before and after, each folder, the files that improved most,
@@ -143,12 +143,12 @@ with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
 
 | enhanced files | degraded time | what changed |
 |---|---|---|
-| ✅ VoiceBank + DEMAND noise (658) | 97 % → 1 % | noise 73 % → 0 %, music-like noise 32 % → 0 % |
-| ⚠️ DNS real recordings (286) | 98 % → 61 % | noise 96 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 22 % → 29 % |
-| ❌ DNS reverberant + noise (148) | 100 % → 100 % | noise 87 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
-| 📊 whole set (2 248 files) | 71 % → 44 % | files with any degradation 1 254 → 539 |
+| VoiceBank + DEMAND noise (658) | 97 % → 1 % | noise 73 % → 0 %, music-like noise 32 % → 0 % |
+| DNS real recordings (286) | 98 % → 61 % | noise 96 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 22 % → 29 % |
+| DNS reverberant + noise (148) | 100 % → 100 % | noise 87 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
+| whole set (2 248 files) | 71 % → 44 % | files with any degradation 1 254 → 539 |
 
-💡 The enhancer removes noise very well but does not remove reverberation, and on
+The enhancer removes noise very well but does not remove reverberation, and on
 reverberant speech it adds codec-like and pitch artefacts — the kind of side
 effect a single MOS number hides. In an earlier run that also enhanced the 150
 reverberant-only DNS files, high-pass artefacts rose from 10 % to 92 % of their
@@ -162,7 +162,7 @@ aadd scan enhanced/ --model v3 --json after.json
 aadd compare before.json after.json -o compare.html --audio embed
 ```
 
-<details><summary>🎧 Both versions of a reverberant, noisy file, before and after enhancement</summary>
+<details><summary>Both versions of a reverberant, noisy file, before and after enhancement</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/compare_pair_dark.png">
@@ -182,13 +182,13 @@ git clone https://github.com/gertelrina/aadd && cd aadd
 pip install -e ".[all]"
 ```
 
-📋 **Requirements:** Python ≥ 3.10, PyTorch ≥ 2.1 (CPU is fine; CUDA and Apple MPS
+**Requirements:** Python ≥ 3.10, PyTorch ≥ 2.1 (CPU is fine; CUDA and Apple MPS
 are picked up automatically), `libsndfile` for FLAC/WAV.
-🤗 **Weights** are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/agertel/aadd)) and downloaded once to `~/.cache/aadd` on first use (v1/v2 16 MB, v3 177 MB); set `AADD_CACHE` to change the folder.
+**Weights** are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/agertel/aadd)) and downloaded once to `~/.cache/aadd` on first use (v1/v2 16 MB, v3 177 MB); set `AADD_CACHE` to change the folder.
 
 ## 🧠 Models
 
-⭐ **v3.1 is the current model and the default** (`--model v3`, `Detector()`): a
+**v3.1 is the current model and the default** (`--model v3`, `Detector()`): a
 Whisper-small encoder that predicts 12 degradation classes every 20 ms, several at
 once, in English and Russian. Its weights live on [Hugging Face](https://huggingface.co/agertel/aadd)
 and are downloaded to `~/.cache/aadd` on first use. The earlier models stay
@@ -203,16 +203,16 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 
 | | v1 | v2 | **v3.1** |
 |---|---|---|---|
-| 🌫️ real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** 🏆 |
-| 🚨 studio-clean files wrongly flagged (any class, p ≥ 0.5)³ | 88% | 90% | **0%** 🏆 |
-| 🧩 degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** 🏆 |
-| ⚡ time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** 🏆 ms | **23** 🏆 / 6.5 ms |
+| real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** 🏆 |
+| studio-clean files wrongly flagged (any class, p ≥ 0.5)³ | 88% | 90% | **0%** 🏆 |
+| degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** 🏆 |
+| time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** 🏆 ms | **23** 🏆 / 6.5 ms |
 
 ² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#-results) and [runs/README.md](runs/README.md).
 
 ³ A file counts as flagged if, for some class, the 95th percentile of its probabilities over time is at least 0.5 (the default threshold), so short isolated spikes do not count.
 
-<details><summary>🏗️ Architecture and inputs of every model</summary>
+<details><summary>Architecture and inputs of every model</summary>
 
 | name | input features | backbone | params | feature time / s of audio | notes |
 |---|---|---|---|---|---|
@@ -232,7 +232,7 @@ noise and crowd babble (fewer false "music" detections on real background noise)
 
 ## 🚀 Usage
 
-### 💻 Command line
+### Command line
 
 ```bash
 aadd scan audio_dir/ -o files.csv --segments segments.csv           # per-file CSV + timeline CSV (1-s segments)
@@ -243,21 +243,21 @@ aadd scan big_dir/ --model v2 --workers 8                           # earlier pe
 aadd info                                                           # models, cache, device
 ```
 
-📤 **What the outputs contain** (v3.1 predicts every 20 ms; the files summarise that):
+**What the outputs contain** (v3.1 predicts every 20 ms; the files summarise that):
 
-* 📄 **`files.csv`**, one row per file:
+* **`files.csv`**, one row per file:
   * `status`: clean / degraded / error;
   * `degraded_segments` and `degraded_fraction`: how many segments, and what share of them, have any degradation;
   * `aadd_count`: number of detected (segment, class) pairs;
   * `detected`: the classes found in the file;
   * `p_<class>`: the highest probability of each class anywhere in the file.
-* ⏱️ **`segments.csv`**, one row per segment of `--resolution` seconds (1 s by default, down to
+* **`segments.csv`**, one row per segment of `--resolution` seconds (1 s by default, down to
   0.02 s), with the highest probability of every class inside that segment.
-* 🧾 **`--json`**: everything above plus a 100-ms timeline for every file.
-* 📊 **`--report`**: the interactive HTML dashboard (see [Dataset report](#-dataset-report)).
-* 🎚️ **Input:** any format `libsndfile` / `ffmpeg` can read; audio is resampled to 16 kHz mono.
+* **`--json`**: everything above plus a 100-ms timeline for every file.
+* **`--report`**: the interactive HTML dashboard (see [Dataset report](#-dataset-report)).
+* **Input:** any format `libsndfile` / `ffmpeg` can read; audio is resampled to 16 kHz mono.
 
-<details><summary><b>🐍 Python API</b></summary>
+<details><summary><b>Python API</b></summary>
 
 ```python
 from aadd import Detector
@@ -276,7 +276,7 @@ for r in det.scan(["a.flac", "b.flac"], workers=4):   # many files, parallel fea
 
 </details>
 
-<details><summary><b>🐳 Docker</b></summary>
+<details><summary><b>Docker</b></summary>
 
 ```bash
 docker build -t aadd .
@@ -287,9 +287,9 @@ docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/rep
 
 ## 📈 Results
 
-<details><summary>📈 All models compared; v3.1 on real recordings and held-out tests; v1 and v2 on their synthetic test</summary>
+<details><summary>All models compared; v3.1 on real recordings and held-out tests; v1 and v2 on their synthetic test</summary>
 
-### ⚖️ All models at a glance
+### All models at a glance
 
 | model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean): files with any class at p ≥ 0.5³ | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple GPU (MPS)¹ |
 |---|---|---|---|---|---|---|
@@ -297,19 +297,19 @@ docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/rep
 | `v2` | 7 synthetic classes | 1 s | 0.53 / 0.82 / 0.73 | 90% | 0.994 / 0.948 | 39 / **3.1** 🏆 |
 | **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** 🏆 | **0.99 / 1.00 / 0.99** 🏆 | **0%** 🏆 | 0.976 / 0.675 | **23** 🏆 / 6.5 |
 
-📖 **How to read it**
+**How to read it**
 
-* ❌ **v1 and v2 work only on their own synthetic data.** On the test they were trained
+* **v1 and v2 work only on their own synthetic data.** On the test they were trained
   for they are near-perfect, but on real recordings real background noise is barely
   ranked above clean speech, and most studio-clean files are flagged.
-* ✅ **v3.1 works on real recordings.** It ranks real noise almost perfectly and flags
+* **v3.1 works on real recordings.** It ranks real noise almost perfectly and flags
   no studio-clean file.
-* ⚠️ **On the v1/v2 synthetic test, v3.1 ranks every shared class well (ROC-AUC ≥ 0.95)
+* **On the v1/v2 synthetic test, v3.1 ranks every shared class well (ROC-AUC ≥ 0.95)
   but has a lower F1**, for two reasons:
   * that test uses extreme settings v3 never saw (low-pass 150–750 Hz, high-pass 2–8 kHz);
   * v3 also reports the low-level noise already present in the LibriVox source
     recordings, which the test labels as clean (noise recall 1.00, precision 0.32).
-* 🧮 **How the real-recording scores are computed:** v1 and v2 use their Gaussian-noise
+* **How the real-recording scores are computed:** v1 and v2 use their Gaussian-noise
   output; for every model the clip score is the 95th percentile of its
   probabilities over time.
 
@@ -319,7 +319,7 @@ Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](run
 
 ³ A file counts as flagged if, for some class, the 95th percentile of its probabilities over time is at least 0.5 (the default threshold), so short isolated spikes do not count.
 
-### 🎙️ v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
+### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
 Real recordings it never saw in training (clip score = 95th percentile of frame
 probabilities):
@@ -332,17 +332,17 @@ probabilities):
 | Dynamic-SUPERB noise detection (VCTK + MUSAN) | noise | 0.992 | 0.96 | 2.2 % | 0.5 % |
 | Dynamic-SUPERB reverberation, small / medium / large room | reverberation | 0.994 / 1.000 / 0.996 | 0.98 / 1.00 / 0.97 | 0 % | 0–1.5 % |
 
-🆕 **What changed in v3.1** (2026-11-06)
+**What changed in v3.1** (2026-11-06)
 
-* 🔧 **What it is:** v3.0 fine-tuned with real environmental noise (FSD50K, CC0 / CC BY
+* **What it is:** v3.0 fine-tuned with real environmental noise (FSD50K, CC0 / CC BY
   clips only) and synthetic crowd babble added to the noise class.
-* ❓ **Why:** v3.0 called real background babble in cafés, streets and buses "music".
-* 📉 **Effect on VoiceBank-DEMAND**, share of noisy clips with a "music" detection, by noise type:
+* **Why:** v3.0 called real background babble in cafés, streets and buses "music".
+* **Effect on VoiceBank-DEMAND**, share of noisy clips with a "music" detection, by noise type:
   * café: 41 % → 16 %
   * public square: 49 % → 25 %
   * bus: 39 % → 18 %
-* ↗️ **Side effect:** noise is detected more often (recall 0.51 → 0.60 on VoiceBank-DEMAND).
-* 👉 **Which to use:** `--model v3` loads v3.1; `--model v3.0` loads the first release.
+* **Side effect:** noise is detected more often (recall 0.51 → 0.60 on VoiceBank-DEMAND).
+* **Which to use:** `--model v3` loads v3.1; `--model v3.0` loads the first release.
 
 Held-out synthetic tests with up to three overlapping degradations (all 12 classes):
 
@@ -353,21 +353,21 @@ Held-out synthetic tests with up to three overlapping degradations (all 12 class
 | English, real measured RIRs | 0.954 | 0.902 | 0.991 |
 | English, MIT IR survey RIRs | 0.946 | 0.883 | 0.990 |
 
-🕵️ v3 also catches what the earlier models were never trained to see: the
+v3 also catches what the earlier models were never trained to see: the
 repository's own "clean" reference clip `examples/degradations/orig.flac` turns out
 to be a narrow-band phone recording (no energy above 4 kHz; v3: low-pass 1.00,
 codec 0.93), and LibriSpeech utterance `61-70968-0000` carries 60 Hz mains hum
 (v3: hum 1.00). Full report: [runs/eval_v3.json](runs/eval_v3.json); per-class
 numbers and limitations: [model card](https://huggingface.co/agertel/aadd).
 
-### 🧪 v1 and v2 (7 synthetic classes, 1-s chunks)
+### v1 and v2 (7 synthetic classes, 1-s chunks)
 
 Evaluation on the regenerated test set (LibriSpeech **test-clean**, 2 620
 source files × (1 clean + 5 degraded copies) = 15 720 files, 108 936 seconds,
 41.6 % of them degraded; per-second labels; threshold 0.5). Reports with all
 numbers are in [`runs/`](runs/).
 
-### 📋 v1 vs v2 at a glance
+### v1 vs v2 at a glance
 
 | model | input | F1 macro (8 classes) | F1 macro (7 degradations) | F1 micro | exact match per second | file-level Spearman | ms per audio second, CPU / MPS |
 |---|---|---|---|---|---|---|---|
@@ -380,7 +380,7 @@ Per-class F1, ROC-AUC, file-level numbers, the v2 confusion matrix, the speed ta
 
 ## 🔧 Reproducing / training on your own data
 
-<details><summary>🔬 Full pipeline: LibriSpeech → synthetic degradations → features → train → evaluate</summary>
+<details><summary>Full pipeline: LibriSpeech → synthetic degradations → features → train → evaluate</summary>
 
 ```bash
 scripts/reproduce.sh          # download LibriSpeech dev-clean/test-clean, build data, train v2, evaluate (≈25 min on an M3 Pro)
@@ -409,9 +409,9 @@ set is never used for selection.
 
 ## 🚧 Limitations
 
-<details><summary>🚫 What the models were not trained for</summary>
+<details><summary>What the models were not trained for</summary>
 
-**🎙️ v3.1**
+**v3.1**
 * Degradations are generated (real noise, music and room impulse responses mixed
   into clean read speech; codecs, filters, clipping, packet loss, hum, clicks,
   pitch and time edits simulated). Real-recording tests cover noise and
@@ -423,7 +423,7 @@ set is never used for selection.
   as music.
 * English and Russian read speech at 16 kHz; content above 8 kHz is never seen.
 
-**🧪 v1 and v2**
+**v1 and v2**
 * Only seven synthetic `audiomentations` degradations, one label per second, no
   overlaps; they do not transfer to real recordings (see Results).
 * `Shift` is a circular roll inside a second; `v1` cannot see it, `v2` reacts to
@@ -437,7 +437,7 @@ Aesthetics) and to other degradation detectors.
 
 ## 📁 Repository layout
 
-<details><summary>🌳 Directory tree</summary>
+<details><summary>Directory tree</summary>
 
 ```
 aadd/            package: features, model, infer (Detector), cli, report, compare, train, eval, baselines, data/, v3/
@@ -451,7 +451,7 @@ tests/           pytest suite (v1 features reproduced bit-for-bit, data pipeline
 
 ## 📝 Citation
 
-<details><summary>📄 BibTeX</summary>
+<details><summary>BibTeX</summary>
 
 ```bibtex
 @software{gertel_aadd,
