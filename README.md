@@ -200,11 +200,13 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 | | v1 | v2 | **v3.1** |
 |---|---|---|---|
 | real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** |
-| studio-clean files wrongly flagged | 88% | 90% | **0%** |
+| studio-clean files wrongly flagged (any class, p ≥ 0.5)³ | 88% | 90% | **0%** |
 | degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** |
 | time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** ms | **23** / 6.5 ms |
 
 ² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#results) and [runs/README.md](runs/README.md).
+
+³ A file counts as flagged if, for some class, the 95th percentile of its probabilities over time is at least 0.5 (the default threshold), so short isolated spikes do not count.
 
 <details><summary>Architecture and inputs of every model</summary>
 
@@ -279,7 +281,7 @@ docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/rep
 
 ### All models at a glance
 
-| model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean) | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple GPU (MPS)¹ |
+| model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean): files with any class at p ≥ 0.5³ | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple GPU (MPS)¹ |
 |---|---|---|---|---|---|---|
 | `v1` (2025) | 7 synthetic classes | 1 s | 0.13 / 0.64 / 0.52 | 88% | **0.995** / **0.954** | 133 / 14.4 |
 | `v2` | 7 synthetic classes | 1 s | 0.53 / 0.82 / 0.73 | 90% | 0.994 / 0.948 | 39 / **3.1** |
@@ -298,12 +300,14 @@ Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](run
 
 ¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table in [runs/README.md](runs/README.md#speed-v1-v2-and-v31-on-the-same-300-files).
 
+³ A file counts as flagged if, for some class, the 95th percentile of its probabilities over time is at least 0.5 (the default threshold), so short isolated spikes do not count.
+
 ### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
 Real recordings it never saw in training (clip score = 95th percentile of frame
 probabilities):
 
-| set | class | ROC-AUC | recall at p ≥ 0.5 | false alarms on clean | music detections (no music present) |
+| set | class | ROC-AUC | recall at p ≥ 0.5 | false alarms on clean files, same class at p ≥ 0.5 | music detections at p ≥ 0.5 (no music present) |
 |---|---|---|---|---|---|
 | VoiceBank-DEMAND test, 824 noisy vs 824 clean twins | noise | 0.992 | 0.60 | 0.0 % | 13.9 % of clips (v3.0: 21.1 %) |
 | DNS Challenge 2020 synthetic dev-test, 600 clips | noise | 0.998 | 0.91 | 0.0 % | 8.2 % (v3.0: 11.3 %) |
