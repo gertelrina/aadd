@@ -132,17 +132,30 @@ for i, c in enumerate(CLASSES):
 out.append("")
 
 # 6. speed
+setup = sp.get("_setup", {})
+models = [m for m in ("v1", "v2", "v3.1") if f"{m}/cpu" in sp]
 out += [
-    "### Speed (300 test files, 2 106 s of audio, one process, Apple M3 Pro)",
+    "### Speed: v1, v2 and v3.1 on the same 300 files",
     "",
-    "| | `v1` | `v2` | speed-up |",
-    "|---|---|---|---|",
+    "| | " + " | ".join(f"`{m}`" for m in models) + " |",
+    "|---|" + "---|" * len(models),
 ]
-for dev, label in [("cpu", "CPU"), ("mps", "Apple MPS")]:
-    a, b = sp[f"v1/{dev}"], sp[f"v2/{dev}"]
-    out.append(
-        f"| {label}: ms per second of audio (× real time) | {a['ms_per_audio_second']:.1f} ({a['x_realtime']:.0f}×) | {b['ms_per_audio_second']:.1f} ({b['x_realtime']:.0f}×) | {a['ms_per_audio_second'] / b['ms_per_audio_second']:.1f}× |"
-    )
+for dev, label in [("cpu", "CPU"), ("mps", "Apple GPU (MPS)")]:
+    cells = [
+        f"{sp[f'{m}/{dev}']['ms_per_audio_second']:.1f} ms ({sp[f'{m}/{dev}']['x_realtime']:.0f}× real time)"
+        for m in models
+    ]
+    out.append(f"| {label}, per second of audio | " + " | ".join(cells) + " |")
+for dev, label in [("cpu", "CPU"), ("mps", "Apple GPU (MPS)")]:
+    cells = [f"{sp[f'{m}/{dev}']['ms_per_audio_second'] * 3.6:.0f} s" for m in models]
+    out.append(f"| {label}, one hour of audio | " + " | ".join(cells) + " |")
+if setup:
+    out += [
+        "",
+        f"Measured on {setup['machine']}, {setup['os']}, Python {setup['python']}, PyTorch {setup['torch']} "
+        f"({setup['torch_cpu_threads']} CPU threads). Data: {setup['data']}. Method: {setup['method']}. "
+        "v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger.",
+    ]
 text = "\n".join(out)
 blocks = text.split("### ")[1:]
 rendered = []

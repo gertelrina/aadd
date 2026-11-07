@@ -35,10 +35,19 @@
   "x_realtime": 153.2
  },
  "v3.1/cpu": {
-  "files": 60,
-  "audio_seconds": 390.0,
-  "wall_s": 10.22,
-  "ms_per_audio_second": 26.19,
-  "x_realtime": 38.2
+  "files": 300,
+  "audio_seconds": 2106.0,
+  "wall_s": 49.03,
+  "ms_per_audio_second": 23.28,
+  "x_realtime": 43.0
+ },
+ "_setup": {
+  "machine": "Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM",
+  "os": "macOS 15.7.4",
+  "python": "3.13.3",
+  "torch": "2.15.0",
+  "torch_cpu_threads": 6,
+  "data": "first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC)",
+  "method": "one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded"
  }
 }

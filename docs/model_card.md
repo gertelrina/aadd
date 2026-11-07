@@ -109,6 +109,7 @@ Code and weights: MIT. Training audio: LibriSpeech (CC BY 4.0).
 | training data | LibriSpeech train-clean-100 + Russian LibriSpeech train; on-the-fly degradations from MUSAN, RIRS_NOISES and DSP / codec generators (see `docs/v3_plan.md`) |
 | training | AdamW 3e-5 / 1e-3, cosine, bf16, batch 64, 30 000 steps on one H100 (2.4 h); best validation checkpoint at step 16 000 |
 | results | `runs/eval_v3.json`; summary in README → Results and on the Hugging Face model card |
+| speed | 23 ms per second of audio on CPU, 6.5 ms on Apple GPU (MPS); Apple MacBook Pro M3 Pro, 36 GB, macOS 15.7, PyTorch 2.15, one process, end to end on 300 LibriSpeech files (`runs/speed_benchmark.json`) |
 
 Limitations specific to v3: noise and hum are the weakest classes (frame AP
 0.80–0.89 and 0.77–0.86), partly because the LibriVox source speech itself

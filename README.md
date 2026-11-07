@@ -47,7 +47,9 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 | real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** |
 | studio-clean files wrongly flagged | 88% | 90% | **0%** |
 | degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** |
-| CPU time per second of audio | 133 ms | 39 ms | **26 ms** |
+| time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** ms | **23** / 6.5 ms |
+
+² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#results).
 
 ## v3: what it builds on
 
@@ -251,11 +253,11 @@ inference, 3–5× faster end to end (measured below).
 
 ### All models at a glance
 
-| model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean) | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple MPS |
+| model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean) | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple GPU (MPS)¹ |
 |---|---|---|---|---|---|---|
 | `v1` (2025) | 7 synthetic classes | 1 s | 0.13 / 0.64 / 0.52 | 88% | **0.995** / **0.954** | 133 / 14.4 |
 | `v2` | 7 synthetic classes | 1 s | 0.53 / 0.82 / 0.73 | 90% | 0.994 / 0.948 | 39 / **3.1** |
-| **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** | **0.99 / 1.00 / 0.99** | **0%** | 0.976 / 0.675 | **26** / 6.5 |
+| **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** | **0.99 / 1.00 / 0.99** | **0%** | 0.976 / 0.675 | **23** / 6.5 |
 
 How to read it: v1 and v2 are near-perfect on the synthetic degradations they were
 trained on but do not transfer to real recordings — real background noise is barely
@@ -267,6 +269,8 @@ v3 also reports the low-level noise already present in the LibriVox source
 recordings (noise recall 1.00, precision 0.32). Real-recording scores for v1/v2 use
 their Gaussian-noise output; clip score = 95th percentile over time for all models.
 Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](runs/eval_v3_1.json).
+
+¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table under *Speed* below.
 
 ### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
@@ -368,12 +372,16 @@ numbers are in [`runs/`](runs/).
 
 </details>
 
-<details><summary><b>Speed (300 test files, 2 106 s of audio, one process, Apple M3 Pro)</b></summary>
+<details><summary><b>Speed: v1, v2 and v3.1 on the same 300 files</b></summary>
 
-| | `v1` | `v2` | speed-up |
+| | `v1` | `v2` | `v3.1` |
 |---|---|---|---|
-| CPU: ms per second of audio (× real time) | 132.9 (8×) | 39.4 (25×) | 3.4× |
-| Apple MPS: ms per second of audio (× real time) | 14.4 (69×) | 3.1 (324×) | 4.7× |
+| CPU, per second of audio | 132.9 ms (8× real time) | 39.4 ms (25× real time) | 23.3 ms (43× real time) |
+| Apple GPU (MPS), per second of audio | 14.4 ms (69× real time) | 3.1 ms (324× real time) | 6.5 ms (153× real time) |
+| CPU, one hour of audio | 478 s | 142 s | 84 s |
+| Apple GPU (MPS), one hour of audio | 52 s | 11 s | 24 s |
+
+Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM, macOS 15.7.4, Python 3.13.3, PyTorch 2.15.0 (6 CPU threads). Data: first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC). Method: one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded. v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger.
 
 </details>
 
