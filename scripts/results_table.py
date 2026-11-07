@@ -29,10 +29,10 @@ def fmt(x, nd=3):
     return "—" if x is None or math.isnan(x) else f"{x:.{nd}f}"
 
 
-def bold_best(values, nd=3):
+def bold_best(values, nd=3, lower=False):
     nums = [v for v in values if v is not None and not math.isnan(v)]
-    best = max(nums) if nums else None
-    return [f"**{fmt(v, nd)}**" if v is not None and v == best else fmt(v, nd) for v in values]
+    best = (min(nums) if lower else max(nums)) if nums else None
+    return [f"**{fmt(v, nd)}** 🏆" if v is not None and v == best else fmt(v, nd) for v in values]
 
 
 v1, v2, bl, sp = (
@@ -45,7 +45,7 @@ out = []
 
 # 1. headline
 out += [
-    "### Models at a glance",
+    "### 📋 v1 vs v2 at a glance",
     "",
     "| model | input | F1 macro (8 classes) | F1 macro (7 degradations) | F1 micro | exact match per second | file-level Spearman | ms per audio second, CPU / MPS |",
     "|---|---|---|---|---|---|---|---|",
@@ -113,7 +113,8 @@ for k, label in [
     ("pearson", "Pearson"),
     ("mae", "mean absolute error of the count, seconds"),
 ]:
-    out.append(f"| {label} | {fmt(v1['file_level'][k])} | {fmt(v2['file_level'][k])} |")
+    a, b = bold_best([v1["file_level"][k], v2["file_level"][k]], lower=k == "mae")
+    out.append(f"| {label} | {a} | {b} |")
 out.append("")
 
 # 5. confusion of v2 (argmax)
@@ -147,14 +148,22 @@ for dev, label in [("cpu", "CPU"), ("mps", "Apple GPU (MPS)")]:
     ]
     out.append(f"| {label}, per second of audio | " + " | ".join(cells) + " |")
 for dev, label in [("cpu", "CPU"), ("mps", "Apple GPU (MPS)")]:
-    cells = [f"{sp[f'{m}/{dev}']['ms_per_audio_second'] * 3.6:.0f} s" for m in models]
+    fastest = min(sp[f"{m}/{dev}"]["ms_per_audio_second"] for m in models)
+    cells = [
+        f"**{sp[f'{m}/{dev}']['ms_per_audio_second'] * 3.6:.0f} s** 🏆"
+        if sp[f"{m}/{dev}"]["ms_per_audio_second"] == fastest
+        else f"{sp[f'{m}/{dev}']['ms_per_audio_second'] * 3.6:.0f} s"
+        for m in models
+    ]
     out.append(f"| {label}, one hour of audio | " + " | ".join(cells) + " |")
 if setup:
     out += [
         "",
-        (f"Measured on {setup['machine']}, {setup['os']}, Python {setup['python']}, PyTorch {setup['torch']} "
-        f"({setup['torch_cpu_threads']} CPU threads). Data: {setup['data']}. Method: {setup['method']}. "
-        "v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger."),
+        (
+            f"Measured on {setup['machine']}, {setup['os']}, Python {setup['python']}, PyTorch {setup['torch']} "
+            f"({setup['torch_cpu_threads']} CPU threads). Data: {setup['data']}. Method: {setup['method']}. "
+            "v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger."
+        ),
     ]
 text = "\n".join(out)
 blocks = text.split("### ")[1:]
