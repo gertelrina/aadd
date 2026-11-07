@@ -287,15 +287,22 @@ docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/rep
 | `v2` | 7 synthetic classes | 1 s | 0.53 / 0.82 / 0.73 | 90% | 0.994 / 0.948 | 39 / **3.1** |
 | **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** | **0.99 / 1.00 / 0.99** | **0%** | 0.976 / 0.675 | **23** / 6.5 |
 
-How to read it: v1 and v2 are near-perfect on the synthetic degradations they were
-trained on but do not transfer to real recordings — real background noise is barely
-ranked above clean speech, and most studio-clean files are flagged. v3.1 ranks real
-noise almost perfectly and flags no clean file; on the v1/v2 test it still ranks
-every shared class well (ROC-AUC ≥ 0.95) but its F1 is lower because that test uses
-extreme settings v3 never saw (low-pass 150–750 Hz, high-pass 2–8 kHz) and because
-v3 also reports the low-level noise already present in the LibriVox source
-recordings (noise recall 1.00, precision 0.32). Real-recording scores for v1/v2 use
-their Gaussian-noise output; clip score = 95th percentile over time for all models.
+**How to read it**
+
+* **v1 and v2 work only on their own synthetic data.** On the test they were trained
+  for they are near-perfect, but on real recordings real background noise is barely
+  ranked above clean speech, and most studio-clean files are flagged.
+* **v3.1 works on real recordings.** It ranks real noise almost perfectly and flags
+  no studio-clean file.
+* **On the v1/v2 synthetic test, v3.1 ranks every shared class well (ROC-AUC ≥ 0.95)
+  but has a lower F1**, for two reasons:
+  * that test uses extreme settings v3 never saw (low-pass 150–750 Hz, high-pass 2–8 kHz);
+  * v3 also reports the low-level noise already present in the LibriVox source
+    recordings, which the test labels as clean (noise recall 1.00, precision 0.32).
+* **How the real-recording scores are computed:** v1 and v2 use their Gaussian-noise
+  output; for every model the clip score is the 95th percentile of its
+  probabilities over time.
+
 Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](runs/eval_v3_1.json).
 
 ¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table in [runs/README.md](runs/README.md#speed-v1-v2-and-v31-on-the-same-300-files).
