@@ -322,7 +322,17 @@ probabilities):
 | Dynamic-SUPERB noise detection (VCTK + MUSAN) | noise | 0.992 | 0.96 | 2.2 % | 0.5 % |
 | Dynamic-SUPERB reverberation, small / medium / large room | reverberation | 0.994 / 1.000 / 0.996 | 0.98 / 1.00 / 0.97 | 0 % | 0–1.5 % |
 
-v3.1 (2026-11-06) is v3.0 fine-tuned with real environmental noise (FSD50K, CC0 / CC BY) and crowd babble: music false alarms on real café / street / bus noise dropped 2–2.5× (VoiceBank-DEMAND per noise type: café 41 % → 16 %, square 49 % → 25 %, bus 39 % → 18 %), noise recall rose. `--model v3` loads v3.1; `--model v3.0` the first release.
+**What changed in v3.1** (2026-11-06)
+
+* **What it is:** v3.0 fine-tuned with real environmental noise (FSD50K, CC0 / CC BY
+  clips only) and synthetic crowd babble added to the noise class.
+* **Why:** v3.0 called real background babble in cafés, streets and buses "music".
+* **Effect on VoiceBank-DEMAND**, share of noisy clips with a "music" detection, by noise type:
+  * café: 41 % → 16 %
+  * public square: 49 % → 25 %
+  * bus: 39 % → 18 %
+* **Side effect:** noise is detected more often (recall 0.51 → 0.60 on VoiceBank-DEMAND).
+* **Which to use:** `--model v3` loads v3.1; `--model v3.0` loads the first release.
 
 Held-out synthetic tests with up to three overlapping degradations (all 12 classes):
 
