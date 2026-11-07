@@ -39,10 +39,12 @@ $ aadd scan examples/speech/61-70968-0000_4.flac
 examples/speech/61-70968-0000_4.flac   4.0s   2/4 degraded s   ClippingDistortion 1.00, HighPassFilter 1.00
 ```
 
-| | v1 (2025) | v2 (this release) |
-|---|---|---|
-| macro-F1, 108 936 test seconds | 0.831 | **0.919** |
-| CPU time per second of audio | 133 ms | **39 ms** |
+| | v1 | v2 | **v3.1** |
+|---|---|---|---|
+| real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** |
+| studio-clean files wrongly flagged | 88% | 90% | **0%** |
+| degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** |
+| CPU time per second of audio | 133 ms | 39 ms | **26 ms** |
 
 ## v3: what it builds on
 
@@ -243,6 +245,25 @@ inference, 3–5× faster end to end (measured below).
 </details>
 
 ## Results
+
+### All models at a glance
+
+| model | detects | time resolution | **real recordings**: noise ROC-AUC (VoiceBank-DEMAND / DNS-2020 / Dynamic-SUPERB) | false alarms on studio-clean speech (VoiceBank clean) | synthetic test of v1/v2, mean over the 6 shared classes: ROC-AUC / F1 | ms per second of audio, CPU / Apple MPS |
+|---|---|---|---|---|---|---|
+| `v1` (2025) | 7 synthetic classes | 1 s | 0.13 / 0.64 / 0.52 | 88% | **0.995** / **0.954** | 133 / 14.4 |
+| `v2` | 7 synthetic classes | 1 s | 0.53 / 0.82 / 0.73 | 90% | 0.994 / 0.948 | 39 / **3.1** |
+| **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** | **0.99 / 1.00 / 0.99** | **0%** | 0.976 / 0.675 | **26** / 6.5 |
+
+How to read it: v1 and v2 are near-perfect on the synthetic degradations they were
+trained on but do not transfer to real recordings — real background noise is barely
+ranked above clean speech, and most studio-clean files are flagged. v3.1 ranks real
+noise almost perfectly and flags no clean file; on the v1/v2 test it still ranks
+every shared class well (ROC-AUC ≥ 0.95) but its F1 is lower because that test uses
+extreme settings v3 never saw (low-pass 150–750 Hz, high-pass 2–8 kHz) and because
+v3 also reports the low-level noise already present in the LibriVox source
+recordings (noise recall 1.00, precision 0.32). Real-recording scores for v1/v2 use
+their Gaussian-noise output; clip score = 95th percentile over time for all models.
+Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](runs/eval_v3_1.json).
 
 ### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
