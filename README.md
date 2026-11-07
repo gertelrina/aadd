@@ -11,6 +11,7 @@
 
 [![CI](https://github.com/gertelrina/aadd/actions/workflows/ci.yml/badge.svg)](https://github.com/gertelrina/aadd/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live demo: dataset report](https://img.shields.io/badge/live%20demo-dataset%20report-2a78d6?style=flat&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)
 
 **Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Before / after](#before--after-did-the-cleaning-help) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
@@ -50,6 +51,23 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 | time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** ms | **23** / 6.5 ms |
 
 ² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#results).
+
+> [!TIP]
+> **Live example — interactive dataset report.** 2 248 public recordings (VoiceBank-DEMAND, DNS Challenge 2020) scanned by v3.1.
+> Move the threshold and see how much clean audio you keep, switch classes off, rank files worst- or best-first,
+> **listen to any file** with its spectrogram and 100-ms class timeline, and download the list of clean files.
+>
+> **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) · make your own: `aadd scan my_dataset/ --report report.html`
+
+<p align="center">
+  <a href="https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_dark.png">
+      <img src="docs/img/report_light.png" width="860" alt="AADD dataset report: threshold and class controls, clean audio kept, per-class shares, per-file histogram">
+    </picture>
+  </a>
+</p>
+<p align="center"><sub>Click the picture to open the live report. It is a single HTML file produced by <code>aadd report</code>; no server needed.</sub></p>
 
 ## v3: what it builds on
 
@@ -92,12 +110,7 @@ is, which problems come together, each folder, a file table ranked worst-first o
 timeline strip per file. Click any file to **listen to it** with a waveform and a 100 ms class timeline that follows playback (click the timeline or a detected interval to jump there). One click exports the list of kept files as CSV. Light and dark themes,
 no external assets.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/report_dark.png">
-  <img src="docs/img/report_light.png" width="860" alt="AADD dataset report: summary tiles, share of audio per degradation, files affected, per-file histogram, co-occurrence matrix">
-</picture>
-
-Example above (threshold 0.80, files kept with ≤ 20 % degraded seconds, music not counted): v3 on 2 248 public recordings it never saw —
+The screenshot [at the top](#aadd--automatic-audio-degradation-detection) shows this page with threshold 0.80, files kept with ≤ 20 % degraded seconds and music not counted: v3.1 on 2 248 public recordings it never saw —
 VoiceBank-DEMAND clean and noisy twins and the DNS Challenge 2020 dev-test.
 [Open the full interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html).
 
