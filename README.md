@@ -27,14 +27,14 @@ AADD finds **which degradation is present in speech, and where, every 20 ms**:
 background noise, music, reverberation, clipping, low-pass / narrow band,
 high-pass, codec artefacts, packet loss, mains hum, clicks, pitch shift and time
 stretch, several at once, in English and Russian. Point it at a file or a whole
-dataset and get per-file verdicts, a per-second timeline and an interactive HTML
+dataset and get per-file verdicts, a timeline down to 20 ms and an interactive HTML
 report with how much clean audio you keep at any threshold — a quality gate for
 ASR / TTS training data, call-centre and podcast pipelines, and a way to check
 what a speech enhancer really did.
 
 The current model is **v3.1** (Whisper-small encoder, weights on Hugging Face,
-downloaded on first use). The earlier per-second models v1 and v2 for seven
-synthetic degradations remain available.
+downloaded on first use). The earlier models v1 and v2 (one prediction per second, seven
+synthetic degradations) remain available.
 
 ```
 $ aadd scan examples/speech/61-70968-0000_4.flac examples/degradations/orig.flac --model v3
@@ -88,8 +88,8 @@ self-contained, **interactive** HTML page for the whole dataset. Move the
 detection threshold, set how many degraded seconds a file may have and still be
 kept, switch classes on or off ("ignore music", or select / clear all at once), and every number updates live:
 how much clean audio is left, which degradations dominate, how degraded each file
-is, which problems come together, each folder, a file table ranked worst-first or best-first with a per-second
-timeline. Click any file to **listen to it** with a waveform and a 100 ms class timeline that follows playback (click the timeline or a detected interval to jump there). One click exports the list of kept files as CSV. Light and dark themes,
+is, which problems come together, each folder, a file table ranked worst-first or best-first with a
+timeline strip per file. Click any file to **listen to it** with a waveform and a 100 ms class timeline that follows playback (click the timeline or a detected interval to jump there). One click exports the list of kept files as CSV. Light and dark themes,
 no external assets.
 
 <picture>
@@ -188,19 +188,22 @@ Model weights are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/
 ### Command line
 
 ```bash
-aadd scan path/to/audio_dir -o report.csv --segments seconds.csv   # folder -> per-file + per-second CSV
-aadd scan a.flac b.wav --json out.json --threshold 0.7              # files -> JSON
-aadd scan big_dir --workers 8 --model v1                            # parallel feature extraction, first model
-aadd scan audio_dir --model v3 --report report.html          # interactive HTML dashboard (see Dataset report)
-aadd info                                                           # bundled models, device
+aadd scan audio_dir/ -o files.csv --segments segments.csv           # per-file CSV + timeline CSV (1-s segments)
+aadd scan audio_dir/ --segments segments.csv --resolution 0.1       # timeline in 100-ms segments
+aadd scan audio_dir/ --report report.html                           # interactive HTML dashboard (see Dataset report)
+aadd scan a.flac b.wav --json out.json --threshold 0.7              # files -> JSON, incl. the 100-ms frame timeline
+aadd scan big_dir/ --model v2 --workers 8                           # earlier per-second model, parallel feature extraction
+aadd info                                                           # models, cache, device
 ```
 
-`report.csv` has one row per file: `status` (clean / degraded / error),
-`degraded_segments`, `degraded_fraction`, `aadd_count` (number of detected
-(second, class) pairs), the list of `detected`
-classes and the max probability per class (`p_<class>`). `seconds.csv` has one
-row per second with all class probabilities. Any format `libsndfile`/`ffmpeg`
-can read is accepted; audio is resampled to 16 kHz mono.
+v3.1 predicts every 20 ms. `files.csv` has one row per file: `status` (clean /
+degraded / error), `degraded_segments`, `degraded_fraction`, `aadd_count`
+(number of detected (segment, class) pairs), the `detected` classes and the
+maximum probability per class (`p_<class>`). `segments.csv` has one row per
+segment of `--resolution` seconds (1 s by default, down to 0.02 s) with the
+highest probability of every class inside it; `--json` also stores a 100-ms
+timeline per file. Any format `libsndfile`/`ffmpeg` can read is accepted; audio
+is resampled to 16 kHz mono.
 
 <details><summary><b>Python API</b></summary>
 
@@ -438,12 +441,21 @@ set is never used for selection.
 
 <details><summary>What the models were not trained for</summary>
 
-* The degradations are **synthetic** (audiomentations on clean LibriSpeech).
-  Real-world noise, reverberation, codecs and packet loss are not classes;
-  treat the output on such data as "something is off" rather than a diagnosis,
-  and use `aadd eval` on your own labelled data before trusting thresholds.
-* One label per second: overlapping degradations were not in the training data.
-* English read speech at 16 kHz; other content types were not evaluated.
+**v3.1**
+* Degradations are generated (real noise, music and room impulse responses mixed
+  into clean read speech; codecs, filters, clipping, packet loss, hum, clicks,
+  pitch and time edits simulated). Real-recording tests cover noise and
+  reverberation; the other classes are validated on held-out generated data only.
+* The "clean" training speech comes from LibriVox audiobooks, which already carry
+  low-level noise, hum and MP3 history, so v3.1 flags some of that; on studio-clean
+  speech (VoiceBank) it flags nothing.
+* Some real noise with tonal content (TV, a radio in the next room) is reported
+  as music.
+* English and Russian read speech at 16 kHz; content above 8 kHz is never seen.
+
+**v1 and v2**
+* Only seven synthetic `audiomentations` degradations, one label per second, no
+  overlaps; they do not transfer to real recordings (see Results).
 * `Shift` is a circular roll inside a second; `v1` cannot see it, `v2` reacts to
   the waveform seam it leaves. Read it as "discontinuity inside this second".
 

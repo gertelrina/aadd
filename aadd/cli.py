@@ -2,7 +2,7 @@
 
 Commands
 --------
-scan                score audio files / folders -> CSV (per file + per second) or JSON
+scan                score audio files / folders -> CSV (per file + per segment), JSON or HTML report
 report              interactive HTML dashboard for a scanned dataset
 compare             before / after HTML comparison of two scans
 info                list bundled models and the compute device
@@ -293,7 +293,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("paths", nargs="+", help="audio files or directories")
     _add_model_args(s)
     s.add_argument("--out", "-o", help="per-file CSV")
-    s.add_argument("--segments", help="per-second CSV")
+    s.add_argument("--segments", help="timeline CSV, one row per --resolution segment")
     s.add_argument("--json", help="full JSON output")
     s.add_argument("--report", help="HTML dashboard with dataset statistics")
     s.add_argument("--workers", type=int, default=0, help="feature-extraction processes (0 = in-process)")

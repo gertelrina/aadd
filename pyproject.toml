@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aadd"
 version = "3.1.0"
-description = "Automatic Audio Degradation Detection: per-second detection of noise, clipping, band-limiting, pitch/time artifacts in speech"
+description = "Automatic Audio Degradation Detection: which degradation is in speech, and where (every 20 ms) - noise, music, reverberation, codecs, clipping, band-limiting, packet loss, hum, clicks, pitch/time edits"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Arina Gertel" }]
