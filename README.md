@@ -241,14 +241,19 @@ aadd scan big_dir/ --model v2 --workers 8                           # earlier pe
 aadd info                                                           # models, cache, device
 ```
 
-v3.1 predicts every 20 ms. `files.csv` has one row per file: `status` (clean /
-degraded / error), `degraded_segments`, `degraded_fraction`, `aadd_count`
-(number of detected (segment, class) pairs), the `detected` classes and the
-maximum probability per class (`p_<class>`). `segments.csv` has one row per
-segment of `--resolution` seconds (1 s by default, down to 0.02 s) with the
-highest probability of every class inside it; `--json` also stores a 100-ms
-timeline per file. Any format `libsndfile`/`ffmpeg` can read is accepted; audio
-is resampled to 16 kHz mono.
+**What the outputs contain** (v3.1 predicts every 20 ms; the files summarise that):
+
+* **`files.csv`**, one row per file:
+  * `status`: clean / degraded / error;
+  * `degraded_segments` and `degraded_fraction`: how many segments, and what share of them, have any degradation;
+  * `aadd_count`: number of detected (segment, class) pairs;
+  * `detected`: the classes found in the file;
+  * `p_<class>`: the highest probability of each class anywhere in the file.
+* **`segments.csv`**, one row per segment of `--resolution` seconds (1 s by default, down to
+  0.02 s), with the highest probability of every class inside that segment.
+* **`--json`**: everything above plus a 100-ms timeline for every file.
+* **`--report`**: the interactive HTML dashboard (see [Dataset report](#dataset-report)).
+* **Input:** any format `libsndfile` / `ffmpeg` can read; audio is resampled to 16 kHz mono.
 
 <details><summary><b>Python API</b></summary>
 
