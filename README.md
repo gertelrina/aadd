@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Demo: dataset report](https://img.shields.io/badge/demo-dataset%20report-2a78d6?style=flat&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)
 
-**Contents:** [Install](#install) · [Usage](#usage) · [Models](#models) · [Results](#results) · [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Before / after](#before--after-did-the-cleaning-help) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
+**Contents:** [v3](#v3-what-it-builds-on) · [Dataset report](#dataset-report) · [Before / after](#before--after-did-the-cleaning-help) · [Install](#install) · [Models](#models) · [Usage](#usage) · [Results](#results) · [Reproducing](#reproducing--training-on-your-own-data) · [Limitations](#limitations) · [Layout](#repository-layout) · [Citation](#citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center">
@@ -39,25 +39,6 @@ what a speech enhancer really did.
 > **listen to any file** with its spectrogram and 100-ms class timeline, and download the list of clean files.
 >
 > **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) · make your own: `aadd scan my_dataset/ --report report.html`
-
-The current model is **v3.1** (Whisper-small encoder, weights on Hugging Face,
-downloaded on first use). The earlier models v1 and v2 (one prediction per second, seven
-synthetic degradations) remain available.
-
-```
-$ aadd scan examples/speech/61-70968-0000_4.flac examples/degradations/orig.flac --model v3
-examples/speech/61-70968-0000_4.flac   4.0s   4/4 degraded s   clipping 1.00, highpass 1.00, hum 1.00
-examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpass 0.95, time_stretch 0.59
-```
-
-| | v1 | v2 | **v3.1** |
-|---|---|---|---|
-| real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** |
-| studio-clean files wrongly flagged | 88% | 90% | **0%** |
-| degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** |
-| time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** ms | **23** / 6.5 ms |
-
-² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#results).
 
 ## v3: what it builds on
 
@@ -201,6 +182,48 @@ Requirements: Python ≥ 3.10, PyTorch ≥ 2.1 (CPU is fine; CUDA and Apple MPS
 are picked up automatically), `libsndfile` for FLAC/WAV.
 Model weights are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/agertel/aadd)) and downloaded once to `~/.cache/aadd` on first use (v1/v2 16 MB, v3 177 MB); set `AADD_CACHE` to change the folder.
 
+## Models
+
+**v3.1 is the current model and the default** (`--model v3`, `Detector()`): a
+Whisper-small encoder that predicts 12 degradation classes every 20 ms, several at
+once, in English and Russian. Its weights live on [Hugging Face](https://huggingface.co/agertel/aadd)
+and are downloaded to `~/.cache/aadd` on first use. The earlier models stay
+available: `v3.0` (first v3 release), and `v2` / `v1`, which predict seven synthetic
+degradations once per second.
+
+```
+$ aadd scan examples/speech/61-70968-0000_4.flac examples/degradations/orig.flac --model v3
+examples/speech/61-70968-0000_4.flac   4.0s   4/4 degraded s   clipping 1.00, highpass 1.00, hum 1.00
+examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpass 0.95, time_stretch 0.59
+```
+
+| | v1 | v2 | **v3.1** |
+|---|---|---|---|
+| real background noise detected (ROC-AUC, VoiceBank-DEMAND) | 0.13 | 0.53 | **0.99** |
+| studio-clean files wrongly flagged | 88% | 90% | **0%** |
+| degradation classes · time resolution | 7 · 1 s | 7 · 1 s | **12 · 20 ms** |
+| time per second of audio, CPU / Apple GPU² | 133 / 14 ms | 39 / **3** ms | **23** / 6.5 ms |
+
+² Measured on an Apple MacBook Pro M3 Pro (36 GB), PyTorch 2.15, one process, end to end; details in [Results](#results) and [runs/README.md](runs/README.md).
+
+<details><summary>Architecture and inputs of every model</summary>
+
+| name | input features | backbone | params | feature time / s of audio | notes |
+|---|---|---|---|---|---|
+| `v1` | mel spectrogram **rendered to a 310×385 PNG with matplotlib** (magma colormap, axes off) | EfficientNet-B0 (ImageNet init), 8 sigmoid outputs | 4.0 M | ≈ 9 ms | the first model (2025-03-11), unchanged weights |
+| `v2` | log-mel tensor 1×128×63 (n_fft 1024, hop 256, top_db 80) | EfficientNet-B0 (ImageNet init, 1-channel stem), 8 sigmoid outputs | 4.0 M | ≈ 1 ms | same data protocol, no image rendering, SpecAugment-style masking |
+| `v3.1` / `v3.0` | Whisper log-mel 80 × 800 (8-s windows, sliding) | Whisper-small encoder, weighted sum of all layers, conv head, 12 sigmoids per 20 ms | 88 M | GPU / Apple MPS recommended | realistic degradations, English + Russian; [weights on Hugging Face](https://huggingface.co/agertel/aadd), downloaded on first use |
+
+v1 and v2 predict, for every 1-s chunk, the probability of each of
+`AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion,
+LowPassFilter, HighPassFilter, None`. The v1 pipeline rendered spectrograms
+through `matplotlib` → PNG → RGB; `aadd.features.render_mel_png` reproduces it
+pixel-for-pixel (tested), so `v1` keeps producing exactly its original outputs.
+`v2` drops the rendering step. v3.1 is v3.0 fine-tuned with real environmental
+noise and crowd babble (fewer false "music" detections on real background noise).
+
+</details>
+
 ## Usage
 
 ### Command line
@@ -247,26 +270,6 @@ for r in det.scan(["a.flac", "b.flac"], workers=4):   # many files, parallel fea
 docker build -t aadd .
 docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/report.html
 ```
-
-</details>
-
-## Models
-
-<details><summary>Three models: v1 (PNG input), v2 (direct log-mel), v3 (Whisper encoder, 12 realistic classes every 20 ms)</summary>
-
-| name | input features | backbone | params | feature time / s of audio | notes |
-|---|---|---|---|---|---|
-| `v1` | mel spectrogram **rendered to a 310×385 PNG with matplotlib** (magma colormap, axes off) | EfficientNet-B0 (ImageNet init), 8 sigmoid outputs | 4.0 M | ≈ 9 ms | the first model (2025-03-11), unchanged weights |
-| `v2` | log-mel tensor 1×128×63 (n_fft 1024, hop 256, top_db 80) | EfficientNet-B0 (ImageNet init, 1-channel stem), 8 sigmoid outputs | 4.0 M | ≈ 1 ms | same data protocol, no image rendering, SpecAugment-style masking |
-| `v3` | Whisper log-mel 80 × 800 (8-s windows, sliding) | Whisper-small encoder, weighted sum of all layers, conv head, 12 sigmoids per 20 ms | 88 M | GPU / Apple MPS recommended | realistic degradations, English + Russian; [weights on Hugging Face](https://huggingface.co/agertel/aadd), downloaded on first use |
-
-Both predict, for every 1-s chunk, the probability of each of
-`AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion,
-LowPassFilter, HighPassFilter, None`. The v1 pipeline rendered spectrograms
-through `matplotlib` → PNG → RGB; `aadd.features.render_mel_png` reproduces it
-pixel-for-pixel (tested), so `v1` keeps producing exactly its original outputs.
-`v2` drops the rendering step: deterministic features, no matplotlib at
-inference, 3–5× faster end to end (measured below).
 
 </details>
 
