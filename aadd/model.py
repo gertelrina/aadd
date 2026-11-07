@@ -63,7 +63,7 @@ REGISTRY = {
     },
 }
 CACHE_DIR = Path(os.environ.get("AADD_CACHE", Path.home() / ".cache" / "aadd"))
-DEFAULT_MODEL = "v2"
+DEFAULT_MODEL = "v3"
 
 
 def build_model(

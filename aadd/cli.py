@@ -26,8 +26,8 @@ from pathlib import Path
 from aadd import __version__
 
 
-def _add_model_args(p: argparse.ArgumentParser, default: str = "v2"):
-    p.add_argument("--model", default=default, help="registry name (v1, v2) or checkpoint path [%(default)s]")
+def _add_model_args(p: argparse.ArgumentParser, default: str = "v3"):
+    p.add_argument("--model", default=default, help="registry name (v3, v3.0, v2, v1) or checkpoint path [%(default)s]")
     p.add_argument("--threshold", type=float, default=0.5, help="detection probability threshold [%(default)s]")
     p.add_argument("--device", default=None, help="cpu | cuda | mps (default: auto)")
     p.add_argument("--batch-size", type=int, default=64)
@@ -379,7 +379,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("eval", help="evaluate a model or the DSP baselines")
     s.add_argument("data", help="make-data directory or featurized .npz")
-    _add_model_args(s)
+    _add_model_args(s, default="v2")  # the v1/v2 synthetic test sets use their 7-class labels
     s.add_argument("--baselines", action="store_true", help="evaluate the DSP baselines instead of a model")
     s.add_argument("--workers", type=int, default=0)
     s.add_argument("--limit", type=int, default=None)

@@ -1,7 +1,7 @@
 """Inference API: ``Detector`` turns audio into per-second degradation probabilities.
 
 >>> from aadd import Detector
->>> det = Detector("v2")              # or "v1", or a path to a checkpoint
+>>> det = Detector()                  # v3 (default), "v2", "v1" or a checkpoint path
 >>> res = det.predict_file("x.flac")
 >>> res.detected                      # {'ClippingDistortion': 0.93, ...}  (file level)
 >>> res.probs.shape                   # (n_seconds, 8)

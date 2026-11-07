@@ -205,7 +205,7 @@ can read is accepted; audio is resampled to 16 kHz mono.
 ```python
 from aadd import Detector
 
-det = Detector("v2")                       # "v1" = first model, or a checkpoint path
+det = Detector()                           # v3.1 by default; "v2" / "v1" or a checkpoint path
 res = det.predict_file("call.wav")
 res.detected                               # {'AddGaussianNoise': 0.98}
 res.probs                                  # (n_seconds, 8) sigmoid probabilities
