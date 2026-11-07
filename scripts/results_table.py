@@ -152,9 +152,9 @@ for dev, label in [("cpu", "CPU"), ("mps", "Apple GPU (MPS)")]:
 if setup:
     out += [
         "",
-        f"Measured on {setup['machine']}, {setup['os']}, Python {setup['python']}, PyTorch {setup['torch']} "
+        (f"Measured on {setup['machine']}, {setup['os']}, Python {setup['python']}, PyTorch {setup['torch']} "
         f"({setup['torch_cpu_threads']} CPU threads). Data: {setup['data']}. Method: {setup['method']}. "
-        "v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger.",
+        "v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger."),
     ]
 text = "\n".join(out)
 blocks = text.split("### ")[1:]
