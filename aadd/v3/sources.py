@@ -91,10 +91,16 @@ def write_pool(out: Path, name: str, items: list[dict], loader, workers: int = 4
 
 def build_fsd(v3_dir: str, out: str, keep_json: str, workers: int = 40) -> dict:
     """FSD50K clips (CC0 / CC BY, no music or human voice) from the philgzl/fsd50k parquet mirror."""
+    import gzip
+
     import pyarrow.parquet as pq
     from huggingface_hub import snapshot_download
 
-    keep = json.loads(Path(keep_json).read_text())
+    opener = gzip.open if str(keep_json).endswith(".gz") else open
+    with opener(keep_json, "rt") as f:
+        keep = json.load(
+            f
+        )  # {fsd id: {"split", "license", "labels"}}; runs/fsd50k_noise_pool.json.gz is the released list
     d = Path(
         snapshot_download(
             "philgzl/fsd50k",
@@ -111,7 +117,7 @@ def build_fsd(v3_dir: str, out: str, keep_json: str, workers: int = 40) -> dict:
             if fname in keep:
                 m = keep[fname]
                 split = "test" if (zlib.crc32(fname.encode()) % 10) == 0 else m["split"]  # 10 % held out for test
-                items.append({"src": a, "split": split, "id": name, "labels": ",".join(m["labels"][:3])})
+                items.append({"src": a, "split": split, "id": name, "labels": ",".join(m.get("labels", [])[:3])})
     return write_pool(Path(out), "noise_fsd", items, _load_bytes, workers)
 
 

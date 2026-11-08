@@ -239,9 +239,9 @@ else:
         "| `eval_v1_test_clean.json`, `eval_v2_test_clean.json` | v1 / v2 on the synthetic test set (per-class P / R / F1 / AUC / AP, confusion, file level) |",
         "| `eval_baselines_test_clean.json` | DSP baselines on the same set |",
         "| `eval_v3.json`, `eval_v3_1.json` | v3.0 / v3.1 on held-out generated sets and real out-of-domain sets |",
-        "| `cross_eval.json` | v3.1 on the v1/v2 test set; v1 / v2 on real recordings |",
         "| `speed_benchmark.json` | timing of all models with the hardware and method |",
         "| `nisqa_ood.json`, `nisqa_test_clean.json` | NISQA as a reference on the same real out-of-domain sets and on the v1/v2 test set |",
+        "| `cross_eval.json`, `music_false_positives.json` | from `scripts/cross_eval.py` and `scripts/music_false_positives.py` (v3.0 vs v3.1 music detections by DEMAND noise type and on DNS-2020) |",
         "| `fsd50k_noise_pool.json.gz` | FSD50K clip ids, split and licence of the v3.1 noise pool (CC0 / CC BY only, no music or voice labels) |",
         "| `v2_train_log.json`, `v3_train_log.json` | training curves |",
     ]

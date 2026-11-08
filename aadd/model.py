@@ -30,31 +30,31 @@ from aadd.constants import CLASSES
 from aadd.features import FeatureSpec
 
 CHECKPOINT_FORMAT = "aadd-checkpoint-1"
-# Weights are hosted on the Hugging Face Hub (agertel/aadd) and cached in CACHE_DIR on first use.
+# Weights are hosted on the Hugging Face Hub (gertelrina/aadd) and cached in CACHE_DIR on first use.
 # A local ``weights/`` folder next to the package, if present, takes precedence (for development).
-HF_REPO = "agertel/aadd"
+HF_REPO = "gertelrina/aadd"
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 
 # name -> (file name, description). Files live in <repo>/weights.
 REGISTRY = {
     "v1": {
         "file": "aadd_v1_efficientnet_b0_png.pt",
-        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v1_efficientnet_b0_png.pt",
+        "url": "https://huggingface.co/gertelrina/aadd/resolve/main/aadd_v1_efficientnet_b0_png.pt",
         "description": "First model (2025-03-11): EfficientNet-B0 on matplotlib-rendered mel PNGs, 8 outputs.",
     },
     "v2": {
         "file": "aadd_v2_efficientnet_b0_mel.pt",
-        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v2_efficientnet_b0_mel.pt",
+        "url": "https://huggingface.co/gertelrina/aadd/resolve/main/aadd_v2_efficientnet_b0_mel.pt",
         "description": "EfficientNet-B0 on direct log-mel tensors (1x128x63), same labels, 3-5x faster than v1.",
     },
     "v3": {
         "file": "aadd_v3_1_whisper_small_frames.pt",
-        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v3_1_whisper_small_frames.pt",
+        "url": "https://huggingface.co/gertelrina/aadd/resolve/main/aadd_v3_1_whisper_small_frames.pt",
         "description": "v3.1: Whisper-small encoder, 12 realistic classes per 20 ms; fewer music false alarms on real babble.",
     },
     "v3.0": {
         "file": "aadd_v3_whisper_small_frames.pt",
-        "url": "https://huggingface.co/agertel/aadd/resolve/main/aadd_v3_whisper_small_frames.pt",
+        "url": "https://huggingface.co/gertelrina/aadd/resolve/main/aadd_v3_whisper_small_frames.pt",
         "description": "First v3 release (2026-11-05); superseded by v3.1.",
     },
     "v3-lite": {

@@ -1,4 +1,4 @@
-# AADD v3 — plan (trained 2026-11-05, weights: https://huggingface.co/agertel/aadd)
+# AADD v3 — plan (trained 2026-11-05, weights: https://huggingface.co/gertelrina/aadd)
 
 Merged from three independent design proposals (realism-first, cheap-evolution,
 ssl-frame-level); this is the version being executed.

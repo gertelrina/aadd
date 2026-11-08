@@ -1,0 +1,101 @@
+{
+ "rule": "95th percentile of the music frame probability >= 0.5",
+ "models": {
+  "v3.0": {
+   "voicebank_noisy_by_noise_type": {
+    "bus": {
+     "n": 164,
+     "share": 0.36585365853658536
+    },
+    "cafe": {
+     "n": 164,
+     "share": 0.39634146341463417
+    },
+    "living": {
+     "n": 166,
+     "share": 0.8493975903614458
+    },
+    "office": {
+     "n": 164,
+     "share": 0.03048780487804878
+    },
+    "psquare": {
+     "n": 166,
+     "share": 0.463855421686747
+    }
+   },
+   "voicebank_noisy_all": {
+    "n": 824,
+    "share": 0.4223300970873786
+   },
+   "voicebank_clean_all": {
+    "n": 824,
+    "share": 0.0
+   },
+   "voicebank_all_clips": {
+    "n": 1648,
+    "share": 0.2111650485436893
+   },
+   "dns_noisy": {
+    "n": 300,
+    "share": 0.22666666666666666
+   },
+   "dns_clean": {
+    "n": 300,
+    "share": 0.0
+   },
+   "dns_all_clips": {
+    "n": 600,
+    "share": 0.11333333333333333
+   }
+  },
+  "v3": {
+   "voicebank_noisy_by_noise_type": {
+    "bus": {
+     "n": 164,
+     "share": 0.17073170731707318
+    },
+    "cafe": {
+     "n": 164,
+     "share": 0.13414634146341464
+    },
+    "living": {
+     "n": 166,
+     "share": 0.8554216867469879
+    },
+    "office": {
+     "n": 164,
+     "share": 0.024390243902439025
+    },
+    "psquare": {
+     "n": 166,
+     "share": 0.20481927710843373
+    }
+   },
+   "voicebank_noisy_all": {
+    "n": 824,
+    "share": 0.279126213592233
+   },
+   "voicebank_clean_all": {
+    "n": 824,
+    "share": 0.0
+   },
+   "voicebank_all_clips": {
+    "n": 1648,
+    "share": 0.1395631067961165
+   },
+   "dns_noisy": {
+    "n": 300,
+    "share": 0.16
+   },
+   "dns_clean": {
+    "n": 300,
+    "share": 0.0033333333333333335
+   },
+   "dns_all_clips": {
+    "n": 600,
+    "share": 0.08166666666666667
+   }
+  }
+ }
+}

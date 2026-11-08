@@ -1,6 +1,6 @@
 # Model card — AADD degradation detectors
 
-Weights are on Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd). v1 and v2 take one second of 16 kHz mono speech and
+Weights are on Hugging Face: [gertelrina/aadd](https://huggingface.co/gertelrina/aadd). v1 and v2 take one second of 16 kHz mono speech and
 return 8 sigmoid probabilities in the fixed order
 `AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion, LowPassFilter, HighPassFilter, None`.
 Load them with `aadd.Detector("v1")` / `aadd.Detector("v2")` or `aadd.model.load_checkpoint`.
@@ -99,7 +99,7 @@ plain `np.roll`): it is effectively a within-second discontinuity detector.
 
 Code and weights: MIT. Training audio: LibriSpeech (CC BY 4.0).
 
-## v3 — `aadd_v3_whisper_small_frames.pt` ([Hugging Face](https://huggingface.co/agertel/aadd))
+## v3 — `aadd_v3_whisper_small_frames.pt` ([Hugging Face](https://huggingface.co/gertelrina/aadd))
 
 | | |
 |---|---|

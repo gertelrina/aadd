@@ -15,6 +15,6 @@ runs/pred_*.csv
 *.npz
 *.onnx
 wandb/
-# weights live on the Hugging Face Hub (agertel/aadd)
+# weights live on the Hugging Face Hub (gertelrina/aadd)
 /weights/
 *.pt

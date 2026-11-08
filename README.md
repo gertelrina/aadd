@@ -1,10 +1,10 @@
 # AADD — Automatic Audio Degradation Detection
 
 <p align="center">
-  <a href="https://huggingface.co/agertel/aadd">
+  <a href="https://huggingface.co/gertelrina/aadd">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-lg-dark.svg">
-      <img src="https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-lg.svg" alt="Model on Hugging Face: agertel/aadd">
+      <img src="https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-lg.svg" alt="Model on Hugging Face: gertelrina/aadd">
     </picture>
   </a>
 </p>
@@ -192,13 +192,13 @@ pip install "aadd[nisqa] @ git+https://github.com/gertelrina/aadd"
 
 **Requirements:** Python ≥ 3.10, PyTorch ≥ 2.1 (CPU is fine; CUDA and Apple MPS
 are picked up automatically), `libsndfile` for FLAC/WAV.
-**Weights** are hosted on Hugging Face ([agertel/aadd](https://huggingface.co/agertel/aadd)) and downloaded once to `~/.cache/aadd` on first use (v1/v2 16 MB, v3 177 MB); set `AADD_CACHE` to change the folder.
+**Weights** are hosted on Hugging Face ([gertelrina/aadd](https://huggingface.co/gertelrina/aadd)) and downloaded once to `~/.cache/aadd` on first use (v1/v2 16 MB, v3 177 MB); set `AADD_CACHE` to change the folder.
 
 ## 🧠 Models
 
 **v3.1 is the current model and the default** (`--model v3`, `Detector()`): a
 Whisper-small encoder that predicts 12 degradation classes every 20 ms, several at
-once, in English and Russian. Its weights live on [Hugging Face](https://huggingface.co/agertel/aadd)
+once, in English and Russian. Its weights live on [Hugging Face](https://huggingface.co/gertelrina/aadd)
 and are downloaded to `~/.cache/aadd` on first use. The earlier models stay
 available: `v3.0` (first v3 release), and `v2` / `v1`, which predict seven synthetic
 degradations once per second.
@@ -226,7 +226,7 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 |---|---|---|---|---|---|
 | `v1` | mel spectrogram **rendered to a 310×385 PNG with matplotlib** (magma colormap, axes off) | EfficientNet-B0 (ImageNet init), 8 sigmoid outputs | 4.0 M | ≈ 9 ms | the first model (2025-03-11), unchanged weights |
 | `v2` | log-mel tensor 1×128×63 (n_fft 1024, hop 256, top_db 80) | EfficientNet-B0 (ImageNet init, 1-channel stem), 8 sigmoid outputs | 4.0 M | ≈ 1 ms | same data protocol, no image rendering, SpecAugment-style masking |
-| `v3.1` / `v3.0` | Whisper log-mel 80 × 800 (8-s windows, sliding) | Whisper-small encoder, weighted sum of all layers, conv head, 12 sigmoids per 20 ms | 88 M | GPU / Apple MPS recommended | realistic degradations, English + Russian; [weights on Hugging Face](https://huggingface.co/agertel/aadd), downloaded on first use |
+| `v3.1` / `v3.0` | Whisper log-mel 80 × 800 (8-s windows, sliding) | Whisper-small encoder, weighted sum of all layers, conv head, 12 sigmoids per 20 ms | 88 M | GPU / Apple MPS recommended | realistic degradations, English + Russian; [weights on Hugging Face](https://huggingface.co/gertelrina/aadd), downloaded on first use |
 
 v1 and v2 predict, for every 1-s chunk, the probability of each of
 `AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion,
@@ -335,15 +335,15 @@ Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](run
 
 ⁴ [NISQA](https://github.com/gabrielmittag/NISQA) v2.0 (torchmetrics implementation), scored as 5 − its noisiness dimension. Its overall MOS gives 0.97 / 0.81 / 0.96. Full numbers: [runs/nisqa_ood.json](runs/nisqa_ood.json).
 
-### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
+### v3.1 (Hugging Face: [gertelrina/aadd](https://huggingface.co/gertelrina/aadd))
 
 Real recordings it never saw in training (clip score = 95th percentile of frame
 probabilities):
 
 | set | class | ROC-AUC | NISQA ROC-AUC: MOS · matching dimension⁵ | recall at p ≥ 0.5 | false alarms on clean files, same class at p ≥ 0.5 | music detections at p ≥ 0.5 (no music present) |
 |---|---|---|---|---|---|---|
-| VoiceBank-DEMAND test, 824 noisy vs 824 clean twins | noise | **0.992** 🏆 | 0.972 · **0.992** 🏆 | 0.60 | 0.0 % | 13.9 % of clips (v3.0: 21.1 %) |
-| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | **0.998** 🏆 | 0.813 · 0.918 | 0.91 | 0.0 % | 8.2 % (v3.0: 11.3 %) |
+| VoiceBank-DEMAND test, 824 noisy vs 824 clean twins | noise | **0.992** 🏆 | 0.972 · **0.992** 🏆 | 0.60 | 0.0 % | 28 % of noisy clips (v3.0: 42 %) |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | **0.998** 🏆 | 0.813 · 0.918 | 0.91 | 0.0 % | 16 % of noisy clips (v3.0: 23 %) |
 | DNS Challenge 2020 synthetic dev-test, 600 clips | reverberation | **1.000** 🏆 | 0.857 · 0.918 | 1.00 | 0.0 % | — |
 | Dynamic-SUPERB noise detection (VCTK + MUSAN) | noise | **0.992** 🏆 | 0.960 · 0.959 | 0.96 | 2.2 % | 0.5 % |
 | Dynamic-SUPERB reverberation, small / medium / large room | reverberation | **0.994 / 1.000 / 0.996** 🏆 | 0.951 / 0.980 / 0.967 · 0.957 / 0.972 / 0.941 | 0.98 / 1.00 / 0.97 | 0 % | 0–1.5 % |
@@ -356,9 +356,10 @@ probabilities):
   clips only) and synthetic crowd babble added to the noise class.
 * **Why:** v3.0 called real background babble in cafés, streets and buses "music".
 * **Effect on VoiceBank-DEMAND**, share of noisy clips with a "music" detection, by noise type:
-  * café: 41 % → 16 %
-  * public square: 49 % → 25 %
-  * bus: 39 % → 18 %
+  * café: 40 % → 13 %
+  * public square: 46 % → 20 %
+  * bus: 37 % → 17 %
+  * all 824 noisy clips: 42 % → 28 % (DNS-2020 noisy clips: 23 % → 16 %); numbers from `scripts/music_false_positives.py`, clip score ≥ 0.5
 * **Side effect:** noise is detected more often (recall 0.51 → 0.60 on VoiceBank-DEMAND).
 * **Which to use:** `--model v3` loads v3.1; `--model v3.0` loads the first release.
 
@@ -376,7 +377,7 @@ repository's own "clean" reference clip `examples/degradations/orig.flac` turns 
 to be a narrow-band phone recording (no energy above 4 kHz; v3: low-pass 1.00,
 codec 0.93), and LibriSpeech utterance `61-70968-0000` carries 60 Hz mains hum
 (v3: hum 1.00). Full report: [runs/eval_v3.json](runs/eval_v3.json); per-class
-numbers and limitations: [model card](https://huggingface.co/agertel/aadd).
+numbers and limitations: [model card](https://huggingface.co/gertelrina/aadd).
 
 ### v1 and v2 (7 synthetic classes, 1-s chunks)
 
