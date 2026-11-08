@@ -2,91 +2,91 @@
  "v3.1_on_v2_test": {
   "AddGaussianNoise": {
    "v3_class": "noise",
-   "auc": 0.9974855434609518,
-   "f1": 0.48704939919893186,
-   "precision": 0.32192022590893044,
+   "auc": 0.9974627434256227,
+   "f1": 0.4869379504976927,
+   "precision": 0.3218228562786712,
    "recall": 1.0,
    "support": 6384
   },
   "ClippingDistortion": {
    "v3_class": "clipping",
-   "auc": 0.946139872804765,
-   "f1": 0.7014434033932642,
-   "precision": 0.5906813093080285,
-   "recall": 0.8633317749727287,
+   "auc": 0.9461607752878893,
+   "f1": 0.7013167890605216,
+   "precision": 0.5905746881330632,
+   "recall": 0.8631759389122643,
    "support": 6417
   },
   "LowPassFilter": {
    "v3_class": "lowpass",
-   "auc": 0.9961556018736073,
-   "f1": 0.8087659796504044,
-   "precision": 0.6969424460431655,
-   "recall": 0.9633312616532007,
+   "auc": 0.9961437364519699,
+   "f1": 0.8075820739968733,
+   "precision": 0.6952669358456707,
+   "recall": 0.9631758856432567,
    "support": 6436
   },
   "HighPassFilter": {
    "v3_class": "highpass",
-   "auc": 0.9826837346502246,
-   "f1": 0.717305400489243,
-   "precision": 0.6124022705365749,
+   "auc": 0.9827261034960799,
+   "f1": 0.718251475945233,
+   "precision": 0.6137827393731216,
    "recall": 0.8655767484105359,
    "support": 6606
   },
   "PitchShift": {
    "v3_class": "pitch_shift",
-   "auc": 0.9618818026793032,
-   "f1": 0.7421150278293136,
-   "precision": 0.7831120190670753,
-   "recall": 0.7051969952475855,
+   "auc": 0.9618617926499338,
+   "f1": 0.7419901541441368,
+   "precision": 0.7834014996591684,
+   "recall": 0.7047370841637284,
    "support": 6523
   },
   "TimeStretch": {
    "v3_class": "time_stretch",
-   "auc": 0.9724560046555357,
-   "f1": 0.5927168656863713,
-   "precision": 0.4343675417661098,
-   "recall": 0.9327535331573226,
+   "auc": 0.9724392366770099,
+   "f1": 0.5924135549745968,
+   "precision": 0.43407546624259075,
+   "recall": 0.9325982295387483,
    "support": 6439
   },
-  "_clean_seconds_any_class": 0.29637315474225345,
+  "_clean_seconds_any_class": 0.2967504598405886,
   "_n_chunks": 108936
  },
  "v1_on_real_noise": {
   "VoiceBank-DEMAND test (824 noisy vs 824 clean twins)": {
-   "noise_auc": 0.13195164482986144,
-   "any_degradation_auc": 0.9055290614101235,
+   "noise_auc": 0.1321003982467716,
+   "any_degradation_auc": 0.9056910700820058,
    "noise_recall_at_0.5": 0.0,
    "false_alarm_clean_at_0.5": 0.875
   },
   "DNS-2020 synthetic (clean / noisy, dry / reverberant)": {
-   "noise_auc": 0.6365222222222222,
-   "any_degradation_auc": 0.6013,
+   "noise_auc": 0.6364888888888889,
+   "any_degradation_auc": 0.6014999999999999,
    "noise_recall_at_0.5": 0.013333333333333334,
    "false_alarm_clean_at_0.5": 0.5233333333333333
   },
   "Dynamic-SUPERB NoiseDetection_VCTK_MUSAN-Noise": {
-   "noise_auc": 0.5158786167960481,
-   "any_degradation_auc": 0.8871862082871256,
+   "noise_auc": 0.5162818832543603,
+   "any_degradation_auc": 0.887387841516282,
    "noise_recall_at_0.5": 0.0,
    "false_alarm_clean_at_0.5": 0.13186813186813187
   }
  },
  "v2_on_real_noise": {
   "VoiceBank-DEMAND test (824 noisy vs 824 clean twins)": {
-   "noise_auc": 0.5311527947968706,
-   "any_degradation_auc": 0.8471322992270712,
+   "noise_auc": 0.5303368602130266,
+   "any_degradation_auc": 0.8475012371571307,
    "noise_recall_at_0.5": 0.0048543689320388345,
-   "false_alarm_clean_at_0.5": 0.8968446601941747
+   "false_alarm_clean_at_0.5": 0.8956310679611651
   },
   "DNS-2020 synthetic (clean / noisy, dry / reverberant)": {
-   "noise_auc": 0.8243,
-   "any_degradation_auc": 0.5426000000000001,
+   "noise_auc": 0.8241444444444445,
+   "any_degradation_auc": 0.5428166666666667,
    "noise_recall_at_0.5": 0.1,
    "false_alarm_clean_at_0.5": 0.7133333333333334
   },
   "Dynamic-SUPERB NoiseDetection_VCTK_MUSAN-Noise": {
-   "noise_auc": 0.7251739086601472,
-   "any_degradation_auc": 0.8824478274019559,
+   "noise_auc": 0.7250730920455691,
+   "any_degradation_auc": 0.8823470107873778,
    "noise_recall_at_0.5": 0.07339449541284404,
    "false_alarm_clean_at_0.5": 0.2857142857142857
   }

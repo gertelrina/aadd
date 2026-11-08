@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Full reproduction: LibriSpeech -> synthetic degradations -> features -> v2 model -> reports.
-# ~25 min on an Apple M3 Pro (data 1 min, features 3 min, training ~15 min, eval ~5 min).
+# ~45 min on an Apple M3 Pro (data 1 min, features 3 min, training ~40 min for 10 epochs, eval ~5 min).
 set -euo pipefail
 DATA=${DATA:-data}
-mkdir -p "$DATA" feats runs
+mkdir -p "$DATA" feats
 
 for split in dev-clean test-clean; do
   if [ ! -d "$DATA/LibriSpeech/$split" ]; then
@@ -19,9 +19,13 @@ aadd make-data "$DATA/LibriSpeech/test-clean" --out "$DATA/aadd_test_clean"     
 aadd featurize "$DATA/aadd_train_dev_clean" --out feats/train_mel.npz --features mel
 aadd featurize "$DATA/aadd_test_clean"      --out feats/test_mel.npz  --features mel
 
+# outputs go to my_runs/ so that the shipped provenance files in runs/ stay untouched
+OUT=${OUT:-my_runs}
+mkdir -p my_models "$OUT"
 aadd train --train feats/train_mel.npz --test feats/test_mel.npz --out my_models/aadd_v2_retrained.pt \
-           --epochs 10 --batch-size 128 --lr 5e-4 --log runs/v2_train_log.json
+           --epochs 10 --batch-size 128 --lr 5e-4 --log "$OUT/v2_train_log.json"
 
-aadd eval "$DATA/aadd_test_clean" --model v2 --workers 8 --out runs/eval_v2_test_clean
-aadd eval "$DATA/aadd_test_clean" --model v1 --workers 8 --out runs/eval_v1_test_clean
-aadd eval "$DATA/aadd_test_clean" --baselines --out runs/eval_baselines_test_clean
+aadd eval "$DATA/aadd_test_clean" --model my_models/aadd_v2_retrained.pt --workers 8 --out "$OUT/eval_v2_retrained_test_clean"
+aadd eval "$DATA/aadd_test_clean" --model v2 --workers 8 --out "$OUT/eval_v2_test_clean"      # released weights, for comparison
+aadd eval "$DATA/aadd_test_clean" --model v1 --workers 8 --out "$OUT/eval_v1_test_clean"
+aadd eval "$DATA/aadd_test_clean" --baselines --out "$OUT/eval_baselines_test_clean"

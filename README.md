@@ -52,7 +52,7 @@ The closest research already shows how to find *which* degradation is in a
 recording and *where*: Amazon's per-second artefact classifier (Higham et al.,
 2022), per-degradation CNN detectors (Saishu et al., 2021), frame-level localisers
 of partial distortions (DAMOS and Speech Quality Embeddings, 2026). But none of
-these papers released code or weights, and each covers only part of the problem:
+these papers released weights (training code is public only for the Paderborn frame-level work), and each covers only part of the problem:
 a few classes, one language, utterance-level labels or no realistic data. In
 practice people fall back on a single MOS score from NISQA or DNSMOS, which says
 *how bad* a recording is, never *what* is wrong or *where*.
@@ -67,13 +67,13 @@ and weights, with the code, the data generator and the weights published.
 | work | what v3 takes from it | why it matters |
 |---|---|---|
 | [URGENT Challenge](https://arxiv.org/abs/2406.04660) (Zhang et al., 2024–2026) | the degradation taxonomy: noise, reverberation, clipping, band limitation, codecs, packet loss | an agreed, realistic class list used by the speech-enhancement community, instead of augmentation-library defaults |
-| [Audio Degradation Toolbox](https://archives.ismir.net/ismir2013/paper/000145.pdf) (Mauch & Ewert, ISMIR 2013) | chainable degradation units in a fixed signal-chain order; hum and click generators | reproducible compound degradations with exact ground truth |
+| [Audio Degradation Toolbox](https://archives.ismir.net/ismir2013/paper/000145.pdf) (Mauch & Ewert, ISMIR 2013) | chainable degradation units applied in a fixed signal-chain order | reproducible compound degradations with exact ground truth |
 | [DAMOS](https://arxiv.org/abs/2608.21176) (Li, Dong, Yan, 2026) | partial distortions inserted into random segments of LibriSpeech with frame-level labels | the model learns *where*, not just *whether*; no seams at fixed 1-s boundaries |
 | [Speech Quality Embeddings](https://arxiv.org/abs/2605.21332) (Kuhlmann et al., Odyssey 2026) | simultaneous degradations in one clip; frame-level evaluation | real recordings rarely have exactly one problem |
 | [Higham et al.](https://openaccess.thecvf.com/content/WACV2022W/VAQ/papers/Higham_A_No-Reference_Model_for_Detecting_Audio_Artifacts_Using_Pretrained_Audio_WACVW_2022_paper.pdf) (Amazon, WACV-W 2022) | a pretrained audio backbone instead of an ImageNet CNN; hum and click classes; per-second reporting | audio pre-training transfers far better to artefact detection |
 | [Saishu et al.](https://link.springer.com/article/10.1186/s13636-021-00198-4) (EURASIP 2021) | one independent detector (sigmoid) per degradation type | handles co-occurring and unseen combinations, unlike a softmax |
 | [WhiSQA](https://arxiv.org/abs/2508.02210) (Close et al., 2025), [UTMOSv2](https://arxiv.org/abs/2409.09305) (Baba et al., SLT 2024) | a speech foundation encoder (Whisper) as the backbone | Whisper was trained on noisy, multilingual real-world audio and is Apache-2.0 licensed |
-| [Tamm et al.](https://arxiv.org/abs/2308.12077) (WASPAA 2023) | a learnable weighted sum of **all** encoder layers | noise and room cues live in early layers, which the last layer discards |
+| [Tamm et al.](https://arxiv.org/abs/2308.12077) (WASPAA 2023), [SUPERB](https://arxiv.org/abs/2105.01051) (Yang et al., 2021) | quality cues sit in the lower and middle encoder layers (Tamm); a learnable weighted sum of **all** layers to use them (SUPERB) | noise and room cues live in early layers, which the last layer discards |
 | [Hook-Net](https://arxiv.org/abs/2202.05718) (Wolff et al., ISMIR 2021) | frame-level outputs and masking frames where a defect is physically absent | clicks and clipping are sparse; per-chunk labels would be mostly wrong |
 
 Data and models used, all openly licensed: LibriSpeech and Russian LibriSpeech
@@ -258,7 +258,7 @@ aadd info                                                           # models, ca
   * `status`: clean / degraded / error;
   * `degraded_segments` and `degraded_fraction`: how many segments, and what share of them, have any degradation;
   * `aadd_count`: number of detected (segment, class) pairs;
-  * `detected`: the classes found in the file;
+  * `detected`: the classes with some segment at or above the threshold (the benchmark tables in Results use the stricter 95th-percentile rule of footnote ³);
   * `p_<class>`: the highest probability of each class anywhere in the file.
 * **`segments.csv`**, one row per segment of `--resolution` seconds (1 s by default, down to
   0.02 s), with the highest probability of every class inside that segment.
@@ -402,7 +402,7 @@ Per-class F1, ROC-AUC, file-level numbers, the v2 confusion matrix, the speed ta
 <details><summary>Full pipeline: LibriSpeech → synthetic degradations → features → train → evaluate</summary>
 
 ```bash
-scripts/reproduce.sh          # download LibriSpeech dev-clean/test-clean, build data, train v2, evaluate (≈25 min on an M3 Pro)
+scripts/reproduce.sh          # download LibriSpeech dev-clean/test-clean, build data, train v2, evaluate (≈45 min on an M3 Pro; outputs in my_runs/)
 ```
 
 Step by step:
