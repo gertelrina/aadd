@@ -94,4 +94,5 @@ Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 1
 | `cross_eval.json` | v3.1 on the v1/v2 test set; v1 / v2 on real recordings |
 | `speed_benchmark.json` | timing of all models with the hardware and method |
 | `nisqa_ood.json`, `nisqa_test_clean.json` | NISQA as a reference on the same real out-of-domain sets and on the v1/v2 test set |
+| `fsd50k_noise_pool.json.gz` | FSD50K clip ids, split and licence of the v3.1 noise pool (CC0 / CC BY only, no music or voice labels) |
 | `v2_train_log.json`, `v3_train_log.json` | training curves |
