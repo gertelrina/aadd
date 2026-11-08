@@ -356,6 +356,9 @@ def _pack(scan: dict, audio: str = "path", embed_top: int = 40, report_dir: str 
                 "i": len(files),
             }
         )
+        nq = f.get("nisqa")
+        if nq and nq.get("mos") == nq.get("mos"):  # skip NaN (clips shorter than NISQA's minimum)
+            files[-1]["m"] = [nq.get(k) for k in ("mos", "noisiness", "discontinuity", "colouration", "loudness")]
         fr_ = f.get("frames")
         if fr_ and fr_.get("q"):
             files[-1].update(fq=fr_["q"], fh=float(fr_["hop_s"]), fn=int(fr_["n"]))

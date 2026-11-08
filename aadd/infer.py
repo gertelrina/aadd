@@ -38,6 +38,7 @@ class FileResult:
     threshold: float
     model: str
     error: str | None = None
+    nisqa: dict | None = None  # optional NISQA scores (aadd scan --nisqa)
 
     # ----- derived quantities ---------------------------------------------
     @property
@@ -110,6 +111,8 @@ class FileResult:
         }
         for c, p in self.max_probs.items():
             row[f"p_{c}"] = round(p, 4)
+        for k, v in (self.nisqa or {}).items():
+            row[f"nisqa_{k}"] = v
         return row
 
     def segment_rows(self) -> list[dict]:
@@ -138,6 +141,8 @@ class FileResult:
             "file": self.file_row(),
             "segments": self.segment_rows(),
         }
+        if self.nisqa:
+            d["nisqa"] = self.nisqa
         fp = getattr(self, "frame_probs", None)
         if fp is not None and len(fp):
             # frame models: keep a finer timeline (max over ``frame_hop`` s), one byte per value

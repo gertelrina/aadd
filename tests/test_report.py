@@ -69,3 +69,26 @@ def test_build_compare_pairs_files():
         "function inspector(",
     ]:
         assert needle in html
+
+
+def test_nisqa_scores_reach_csv_json_and_compare():
+    from aadd.compare import build_compare
+    from aadd.infer import FileResult
+
+    classes = ["noise", "reverb"]
+    r = FileResult(
+        "/x/a.wav", 16000, 2.0, np.array([0.0, 1.0]), np.array([1.0, 2.0]), np.zeros((2, 2)), classes, 0.5, "v3"
+    )
+    r.nisqa = {"mos": 3.5, "noisiness": 3.0, "discontinuity": 4.0, "colouration": 4.1, "loudness": 4.2}
+    assert r.file_row()["nisqa_mos"] == 3.5 and r.to_dict()["nisqa"]["loudness"] == 4.2
+
+    def scan(root, mos):
+        fs = [_file(f"/{root}/s/f{i}.wav", np.full((3, 2), 0.1), classes) for i in range(3)]
+        for f, m in zip(fs, mos):
+            f["nisqa"] = {"mos": m, "noisiness": m, "discontinuity": m, "colouration": m, "loudness": m}
+        return {"model": "v3", "threshold": 0.5, "classes": classes, "files": fs}
+
+    html = build_compare(scan("raw", [2.0, 2.5, float("nan")]), scan("clean", [4.0, 4.5, 3.0]), audio="none")
+    before = json.loads(re.search(r"window.AADD_BEFORE=(.*?);window.AADD_AFTER", html, re.DOTALL).group(1))
+    assert [f.get("m", [None])[0] for f in before["files"]] == [2.0, 2.5, None]  # NaN dropped
+    assert "NISQA MOS" in html

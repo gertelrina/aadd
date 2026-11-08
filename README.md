@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Demo: dataset report](https://img.shields.io/badge/demo-dataset%20report-2a78d6?style=flat&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)
 
-**Contents:** [v3](#-v3-what-it-builds-on) · [Dataset report](#-dataset-report) · [Before / after](#-before--after-did-the-cleaning-help) · [Install](#-install) · [Models](#-models) · [Usage](#-usage) · [Results](#-results) · [Reproducing](#-reproducing--training-on-your-own-data) · [Limitations](#-limitations) · [Layout](#-repository-layout) · [Citation](#-citation)  
+**Contents:** [Why AADD](#-why-aadd) · [Dataset report](#-dataset-report) · [Before / after](#-before--after-did-the-cleaning-help) · [Install](#-install) · [Models](#-models) · [Usage](#-usage) · [Results](#-results) · [Reproducing](#-reproducing--training-on-your-own-data) · [Limitations](#-limitations) · [Layout](#-repository-layout) · [Citation](#-citation)  
 **Docs:** [related work, 100 references](docs/related_work.md) · [model card](docs/model_card.md) · [v3 plan](docs/v3_plan.md)
 
 <p align="center">
@@ -42,7 +42,11 @@ AADD finds **which degradation is present in speech, and where, every 20 ms**.
 >
 > **[▶ Open the interactive report](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/report_public_sets.html)** · [before / after speech enhancement](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html) with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) · make your own: `aadd scan my_dataset/ --report report.html`
 
-## 🧩 v3: what it builds on
+## 🎯 Why AADD
+
+**Goal:** an open tool that tells *what* is wrong with a speech recording and
+*where*, so that a speech dataset can be cleaned, or an audio pipeline checked,
+without listening to every file.
 
 The closest research already shows how to find *which* degradation is in a
 recording and *where*: Amazon's per-second artefact classifier (Higham et al.,
@@ -53,7 +57,7 @@ a few classes, one language, utterance-level labels or no realistic data. In
 practice people fall back on a single MOS score from NISQA or DNSMOS, which says
 *how bad* a recording is, never *what* is wrong or *where*.
 
-v3 takes the strongest idea from each of these works and puts them into one open
+AADD v3 takes the strongest idea from each of these works and puts them into one open
 model under MIT: 12 realistic degradation classes, labels every 20 ms, several
 degradations at once, English and Russian, built only from openly licensed data
 and weights, with the code, the data generator and the weights published.
@@ -133,7 +137,8 @@ player, spectrogram and timeline.
 Example: the 2 248 public recordings from the [dataset report](#-dataset-report).
 v3.1 flagged background noise or music in 1 096 of them; only those were enhanced
 with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
-(MossFormerGAN_SE_16K, Apache-2.0), then all files were scanned again with v3.1.
+(MossFormerGAN_SE_16K, Apache-2.0), then all files were scanned again with v3.1
+and scored with [NISQA](https://github.com/gabrielmittag/NISQA) (`aadd scan --nisqa`).
 [Open the interactive comparison](https://htmlpreview.github.io/?https://github.com/gertelrina/aadd/blob/main/docs/examples/compare_clearervoice.html).
 
 <picture>
@@ -141,24 +146,25 @@ with [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
   <img src="docs/img/compare_light.png" width="860" alt="aadd compare: degraded time 71% to 44% after enhancing noisy files, per-class before/after bars">
 </picture>
 
-| enhanced files | degraded time | what changed |
-|---|---|---|
-| VoiceBank + DEMAND noise (658) | 97 % → 1 % | noise 73 % → 0 %, music-like noise 32 % → 0 % |
-| DNS real recordings (286) | 98 % → 61 % | noise 96 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 22 % → 29 % |
-| DNS reverberant + noise (148) | 100 % → 100 % | noise 87 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
-| whole set (2 248 files) | 71 % → 44 % | files with any degradation 1 254 → 539 |
+| enhanced files | degraded time (AADD) | NISQA MOS, 1–5 | what changed (AADD) |
+|---|---|---|---|
+| VoiceBank + DEMAND noise (658) | 97 % → 1 % | 2.85 → 4.71 | noise 73 % → 0 %, music-like noise 32 % → 0 % |
+| DNS real recordings (286) | 98 % → 61 % | 2.07 → 3.54 | noise 96 % → 3 %, but codec artefacts 9 % → 16 %, reverberation 22 % → 29 % |
+| DNS reverberant + noise (148) | 100 % → 100 % | 1.66 → 2.55 | noise 87 % → 17 %, reverberation unchanged, codec artefacts 1 % → 25 %, pitch-shift-like 3 % → 17 % |
+| whole set (2 248 files) | 71 % → 44 % | 3.34 → 4.13 | files with any degradation 1 254 → 539 |
 
 The enhancer removes noise very well but does not remove reverberation, and on
-reverberant speech it adds codec-like and pitch artefacts — the kind of side
-effect a single MOS number hides. In an earlier run that also enhanced the 150
+reverberant speech it adds codec-like and pitch artefacts. NISQA still reports a
+better MOS for those files (1.66 → 2.55): a single quality score hides this side
+effect. In an earlier run that also enhanced the 150
 reverberant-only DNS files, high-pass artefacts rose from 10 % to 92 % of their
 time and pitch-shift-like artefacts from 1 % to 28 %, so reverberant files are
 best left alone or sent to a dereverberation model. The recommended loop:
 
 ```bash
-aadd scan raw/ --model v3 --json before.json
+aadd scan raw/ --model v3 --nisqa --json before.json
 python scripts/enhance_with_clearervoice.py before.json raw/ enhanced/ --classes noise,music
-aadd scan enhanced/ --model v3 --json after.json
+aadd scan enhanced/ --model v3 --nisqa --json after.json
 aadd compare before.json after.json -o compare.html --audio embed
 ```
 
@@ -180,6 +186,8 @@ pip install "aadd @ git+https://github.com/gertelrina/aadd"
 # or, for development / training:
 git clone https://github.com/gertelrina/aadd && cd aadd
 pip install -e ".[all]"
+# optional NISQA quality scores next to the detections:
+pip install "aadd[nisqa] @ git+https://github.com/gertelrina/aadd"
 ```
 
 **Requirements:** Python ≥ 3.10, PyTorch ≥ 2.1 (CPU is fine; CUDA and Apple MPS
@@ -240,6 +248,7 @@ aadd scan audio_dir/ --segments segments.csv --resolution 0.1       # timeline i
 aadd scan audio_dir/ --report report.html                           # interactive HTML dashboard (see Dataset report)
 aadd scan a.flac b.wav --json out.json --threshold 0.7              # files -> JSON, incl. the 100-ms frame timeline
 aadd scan big_dir/ --model v2 --workers 8                           # earlier per-second model, parallel feature extraction
+aadd scan audio_dir/ -o files.csv --nisqa                           # add NISQA MOS and quality dimensions per file
 aadd info                                                           # models, cache, device
 ```
 
@@ -255,6 +264,7 @@ aadd info                                                           # models, ca
   0.02 s), with the highest probability of every class inside that segment.
 * **`--json`**: everything above plus a 100-ms timeline for every file.
 * **`--report`**: the interactive HTML dashboard (see [Dataset report](#-dataset-report)).
+* **`--nisqa`**: `nisqa_mos` and four NISQA quality dimensions per file, from 1 (bad) to 5 (excellent); `aadd compare` shows them before and after. NISQA weights are CC BY-NC-SA 4.0 and are downloaded by torchmetrics on first use.
 * **Input:** any format `libsndfile` / `ffmpeg` can read; audio is resampled to 16 kHz mono.
 
 <details><summary><b>Python API</b></summary>
@@ -295,7 +305,8 @@ docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/rep
 |---|---|---|---|---|---|---|
 | `v1` (2025) | 7 synthetic classes | 1 s | 0.13 / 0.64 / 0.52 | 88% | **0.995** 🏆 / **0.954** 🏆 | 133 / 14.4 |
 | `v2` | 7 synthetic classes | 1 s | 0.53 / 0.82 / 0.73 | 90% | 0.994 / 0.948 | 39 / **3.1** 🏆 |
-| **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** 🏆 | **0.99 / 1.00 / 0.99** 🏆 | **0%** 🏆 | 0.976 / 0.675 | **23** 🏆 / 6.5 |
+| **`v3.1`** (default `v3`) | 12 realistic classes, overlapping, English + Russian | **20 ms** 🏆 | **0.99 / 1.00 / 0.99** 🏆 | **0%** 🏆 | 0.976 / 0.675 | 23 / 6.5 |
+| NISQA (reference) | a quality score per file (MOS + 4 dimensions), no classes | whole file | 0.99 / 0.92 / 0.96⁴ | — | — | **3.8** 🏆 / — |
 
 **How to read it**
 
@@ -309,28 +320,35 @@ docker run -v /path/to/audio:/data aadd scan /data --model v3 --report /data/rep
   * that test uses extreme settings v3 never saw (low-pass 150–750 Hz, high-pass 2–8 kHz);
   * v3 also reports the low-level noise already present in the LibriVox source
     recordings, which the test labels as clean (noise recall 1.00, precision 0.32).
+* **NISQA is a quality score, not a detector.** Its noisiness score separates noisy
+  from clean files as well as v3.1 on VoiceBank-DEMAND, and worse on DNS-2020 and Dynamic-SUPERB. It
+  is faster, but it gives one number per file: no class, no timeline.
 * **How the real-recording scores are computed:** v1 and v2 use their Gaussian-noise
   output; for every model the clip score is the 95th percentile of its
   probabilities over time.
 
 Details: [runs/cross_eval.json](runs/cross_eval.json), [runs/eval_v3_1.json](runs/eval_v3_1.json).
 
-¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table in [runs/README.md](runs/README.md#speed-v1-v2-and-v31-on-the-same-300-files).
+¹ Apple MacBook Pro M3 Pro (6+6 CPU cores, 18-core GPU, 36 GB), macOS 15.7, PyTorch 2.15, one process, end to end on the same 300 LibriSpeech files (2 106 s); full table in [runs/README.md](runs/README.md#speed-v1-v2-v31-and-nisqa-on-the-same-300-files).
 
 ³ A file counts as flagged if, for some class, the 95th percentile of its probabilities over time is at least 0.5 (the default threshold), so short isolated spikes do not count.
+
+⁴ [NISQA](https://github.com/gabrielmittag/NISQA) v2.0 (torchmetrics implementation), scored as 5 − its noisiness dimension. Its overall MOS gives 0.97 / 0.81 / 0.96. Full numbers: [runs/nisqa_ood.json](runs/nisqa_ood.json).
 
 ### v3.1 (Hugging Face: [agertel/aadd](https://huggingface.co/agertel/aadd))
 
 Real recordings it never saw in training (clip score = 95th percentile of frame
 probabilities):
 
-| set | class | ROC-AUC | recall at p ≥ 0.5 | false alarms on clean files, same class at p ≥ 0.5 | music detections at p ≥ 0.5 (no music present) |
-|---|---|---|---|---|---|
-| VoiceBank-DEMAND test, 824 noisy vs 824 clean twins | noise | 0.992 | 0.60 | 0.0 % | 13.9 % of clips (v3.0: 21.1 %) |
-| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | 0.998 | 0.91 | 0.0 % | 8.2 % (v3.0: 11.3 %) |
-| DNS Challenge 2020 synthetic dev-test, 600 clips | reverberation | 1.000 | 1.00 | 0.0 % | — |
-| Dynamic-SUPERB noise detection (VCTK + MUSAN) | noise | 0.992 | 0.96 | 2.2 % | 0.5 % |
-| Dynamic-SUPERB reverberation, small / medium / large room | reverberation | 0.994 / 1.000 / 0.996 | 0.98 / 1.00 / 0.97 | 0 % | 0–1.5 % |
+| set | class | ROC-AUC | NISQA ROC-AUC: MOS · matching dimension⁵ | recall at p ≥ 0.5 | false alarms on clean files, same class at p ≥ 0.5 | music detections at p ≥ 0.5 (no music present) |
+|---|---|---|---|---|---|---|
+| VoiceBank-DEMAND test, 824 noisy vs 824 clean twins | noise | **0.992** 🏆 | 0.972 · **0.992** 🏆 | 0.60 | 0.0 % | 13.9 % of clips (v3.0: 21.1 %) |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | noise | **0.998** 🏆 | 0.813 · 0.918 | 0.91 | 0.0 % | 8.2 % (v3.0: 11.3 %) |
+| DNS Challenge 2020 synthetic dev-test, 600 clips | reverberation | **1.000** 🏆 | 0.857 · 0.918 | 1.00 | 0.0 % | — |
+| Dynamic-SUPERB noise detection (VCTK + MUSAN) | noise | **0.992** 🏆 | 0.960 · 0.959 | 0.96 | 2.2 % | 0.5 % |
+| Dynamic-SUPERB reverberation, small / medium / large room | reverberation | **0.994 / 1.000 / 0.996** 🏆 | 0.951 / 0.980 / 0.967 · 0.957 / 0.972 / 0.941 | 0.98 / 1.00 / 0.97 | 0 % | 0–1.5 % |
+
+⁵ NISQA scored as 5 − overall MOS, then as 5 − the dimension closest to the class (noisiness for noise, colouration for reverberation). NISQA has no class outputs, so recall and false alarms do not apply.
 
 **What changed in v3.1** (2026-11-06)
 
@@ -367,12 +385,13 @@ source files × (1 clean + 5 degraded copies) = 15 720 files, 108 936 seconds,
 41.6 % of them degraded; per-second labels; threshold 0.5). Reports with all
 numbers are in [`runs/`](runs/).
 
-### v1 vs v2 at a glance
+### v1 and v2 at a glance (NISQA for reference)
 
 | model | input | F1 macro (8 classes) | F1 macro (7 degradations) | F1 micro | exact match per second | file-level Spearman | ms per audio second, CPU / MPS |
 |---|---|---|---|---|---|---|---|
 | `v1` (2025) | PNG 310×385 | 0.831 | 0.818 | 0.908 | 0.906 | 0.932 | 133 / 14.4 |
 | `v2` | log-mel 1×128×63 | **0.919** 🏆 | **0.916** 🏆 | **0.930** 🏆 | **0.927** 🏆 | **0.938** 🏆 | 39 / 3.1 |
+| NISQA (quality score, no classes) | mel spectrogram | — | — | — | — | 0.528 | 3.8 / — |
 
 Per-class F1, ROC-AUC, file-level numbers, the v2 confusion matrix, the speed table and notes on reading these numbers: [runs/README.md](runs/README.md).
 

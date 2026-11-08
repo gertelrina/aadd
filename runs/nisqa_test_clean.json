@@ -1,0 +1,12 @@
+{
+ "model": "NISQA v2.0 (torchmetrics)",
+ "n_files": 15720,
+ "file_level": {
+  "spearman_n_degraded_vs_5_minus_mos": 0.528469937259339,
+  "pearson_n_degraded_vs_5_minus_mos": 0.4108559591576768,
+  "auc_any_degraded_vs_clean_copy": 0.8796015556609278,
+  "mean_mos_clean_copy": 3.993572727545796,
+  "mean_mos_degraded": 2.843469308672058
+ },
+ "seconds": 595.6
+}

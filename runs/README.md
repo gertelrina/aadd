@@ -34,11 +34,13 @@ copies) = 15 720 files, 108 936 one-second chunks, 41.6 % degraded, one label pe
 
 ## File level (15 720 files)
 
-| | `v1` | `v2` |
-|---|---|---|
-| Spearman(true number of degraded seconds, predicted `aadd_count`) | 0.932 | **0.938** 🏆 |
-| Pearson | 0.941 | **0.956** 🏆 |
-| mean absolute error of the count, seconds | 0.552 | **0.404** 🏆 |
+| | `v1` | `v2` | NISQA |
+|---|---|---|---|
+| Spearman(true number of degraded seconds, predicted `aadd_count`; for NISQA 5 − MOS) | 0.932 | **0.938** 🏆 | 0.528 |
+| Pearson | 0.941 | **0.956** 🏆 | 0.411 |
+| mean absolute error of the count, seconds | 0.552 | **0.404** 🏆 | — |
+
+NISQA MOS: 3.99 on the clean copies, 2.84 on files with degraded seconds; ROC-AUC for "file has any degraded second" 0.880. A quality score falls when something is wrong, but it does not count or name the degradations.
 
 ## `v2` confusion matrix (argmax over the 8 outputs; rows = true, columns = predicted)
 
@@ -53,16 +55,16 @@ copies) = 15 720 files, 108 936 one-second chunks, 41.6 % degraded, one label pe
 | HPF | 0 | 0 | 0 | 0 | 0 | 0 | **6,606** | 0 |
 | None | 3 | 972 | 47 | 2,190 | 1,475 | 8 | 94 | **58,820** |
 
-## Speed: v1, v2 and v3.1 on the same 300 files
+## Speed: v1, v2, v3.1 and NISQA on the same 300 files
 
-| | `v1` | `v2` | `v3.1` |
-|---|---|---|---|
-| CPU, per second of audio | 132.9 ms (8× real time) | 39.4 ms (25× real time) | 23.3 ms (43× real time) |
-| Apple GPU (MPS), per second of audio | 14.4 ms (69× real time) | 3.1 ms (324× real time) | 6.5 ms (153× real time) |
-| CPU, one hour of audio | 478 s | 142 s | **84 s** 🏆 |
-| Apple GPU (MPS), one hour of audio | 52 s | **11 s** 🏆 | 24 s |
+| | `v1` | `v2` | `v3.1` | NISQA |
+|---|---|---|---|---|
+| CPU, per second of audio | 132.9 ms (8× real time) | 39.4 ms (25× real time) | 23.3 ms (43× real time) | 3.8 ms (266× real time) |
+| Apple GPU (MPS), per second of audio | 14.4 ms (69× real time) | 3.1 ms (324× real time) | 6.5 ms (153× real time) | — |
+| CPU, one hour of audio | 478 s | 142 s | 84 s | **14 s** 🏆 |
+| Apple GPU (MPS), one hour of audio | 52 s | **11 s** 🏆 | 24 s | — |
 
-Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM, macOS 15.7.4, Python 3.13.3, PyTorch 2.15.0 (6 CPU threads). Data: first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC). Method: one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded. v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger.
+Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM, macOS 15.7.4, Python 3.13.3, PyTorch 2.15.0 (6 CPU threads). Data: first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC). Method: one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded. v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger. NISQA: the torchmetrics implementation, CPU only; it outputs five quality scores per file, not classes or a timeline.
 
 ## How to read the v1 / v2 numbers
 
@@ -91,4 +93,5 @@ Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 1
 | `eval_v3.json`, `eval_v3_1.json` | v3.0 / v3.1 on held-out generated sets and real out-of-domain sets |
 | `cross_eval.json` | v3.1 on the v1/v2 test set; v1 / v2 on real recordings |
 | `speed_benchmark.json` | timing of all models with the hardware and method |
+| `nisqa_ood.json`, `nisqa_test_clean.json` | NISQA as a reference on the same real out-of-domain sets and on the v1/v2 test set |
 | `v2_train_log.json`, `v3_train_log.json` | training curves |

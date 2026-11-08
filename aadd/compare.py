@@ -48,12 +48,15 @@ const BI={};B.files.forEach((f,i)=>BI[f.s+'/'+f.name]=i);
 const PAIRS=A.files.map((f,i)=>[i,BI[f.s+'/'+f.name]]).filter(p=>p[1]!==undefined);
 const st={thr:Math.round(A.threshold*100),on:A.classes.map(()=>true)};
 const ROWS=window.AADD_ROWS||15;
+const HAS_M=PAIRS.some(([i,k])=>A.files[i].m&&B.files[k].m);
+const mos=f=>f.m?f.m[0].toFixed(2):'—';
 function fileStats(f,T){const n=f.n,c=new Float64Array(C);let deg=0;for(let i=0;i<n;i++){let any=false;for(let j=0;j<C;j++){if(st.on[j]&&f.p[i*C+j]>=T){c[j]++;any=true}}if(any)deg++}return {n,deg,c}}
 function compute(){
-  const T=qthr(st.thr/100);const R={secs:0,b:{deg:0,cls:new Float64Array(C),files:0},a:{deg:0,cls:new Float64Array(C),files:0},sub:{},pairs:[]};
+  const T=qthr(st.thr/100);const R={secs:0,b:{deg:0,cls:new Float64Array(C),files:0},a:{deg:0,cls:new Float64Array(C),files:0},sub:{},pairs:[],mb:0,ma:0,mn:0};
   for(const [i,k] of PAIRS){const fb=A.files[i],fa=B.files[k],sb=fileStats(fb,T),sa=fileStats(fa,T),n=Math.min(sb.n,sa.n);
     R.secs+=n;R.b.deg+=sb.deg;R.a.deg+=sa.deg;if(sb.deg)R.b.files++;if(sa.deg)R.a.files++;
-    const s=R.sub[fb.s]||(R.sub[fb.s]={secs:0,files:0,b:new Float64Array(C),a:new Float64Array(C),bd:0,ad:0});s.secs+=n;s.files++;s.bd+=sb.deg;s.ad+=sa.deg;
+    const s=R.sub[fb.s]||(R.sub[fb.s]={secs:0,files:0,b:new Float64Array(C),a:new Float64Array(C),bd:0,ad:0,mb:0,ma:0,mn:0});s.secs+=n;s.files++;s.bd+=sb.deg;s.ad+=sa.deg;
+    if(fb.m&&fa.m){R.mb+=fb.m[0];R.ma+=fa.m[0];R.mn++;s.mb+=fb.m[0];s.ma+=fa.m[0];s.mn++;}
     let newSec=0;const newCls=[];for(let j=0;j<C;j++){R.b.cls[j]+=sb.c[j];R.a.cls[j]+=sa.c[j];s.b[j]+=sb.c[j];s.a[j]+=sa.c[j];if(sa.c[j]>=1&&sb.c[j]===0){newSec+=sa.c[j];newCls.push(j)}}
     R.pairs.push({i,k,fb,fa,n,bd:sb.deg/Math.max(sb.n,1),ad:sa.deg/Math.max(sa.n,1),newSec,newCls});}
   return R;
@@ -64,6 +67,8 @@ function tiles(R){
     [R.b.files.toLocaleString()+' → '+R.a.files.toLocaleString(),'files with any degradation','of '+N.toLocaleString()+' matched files'],
     [imp.toLocaleString(),'files improved',pct(imp/Math.max(N,1))+' have fewer degraded seconds'],
     [neu.toLocaleString(),'files with new problems',pct(neu/Math.max(N,1))+' gained a class absent before']];
+  if(HAS_M&&R.mn)t.push([(R.mb/R.mn).toFixed(2)+' → '+(R.ma/R.mn).toFixed(2),'NISQA MOS, mean','1 bad … 5 excellent · '+R.mn.toLocaleString()+' files']);
+  $('tiles').style.gridTemplateColumns=`repeat(${t.length},1fr)`;
   $('tiles').innerHTML=t.map(([v,l,d],x)=>`<div class="card tile ${x===0?'hero':''}"><div class="v" style="font-size:22px">${v}</div><div class="l">${l}</div><div class="d">${d}</div></div>`).join('');
 }
 function bars(R){
@@ -79,23 +84,24 @@ function bars(R){
   $('bars').innerHTML=s+'</svg>';
 }
 function subs(R){
-  $('subs').innerHTML='<tr><th>folder</th><th class=num>files</th><th class=num>degraded time before</th><th class=num>after</th><th>largest changes (% of time)</th></tr>'+Object.entries(R.sub).map(([k,s])=>{
+  $('subs').innerHTML='<tr><th>folder</th><th class=num>files</th><th class=num>degraded time before</th><th class=num>after</th>'+(HAS_M?'<th class=num>NISQA MOS before → after</th>':'')+'<th>largest changes (% of time)</th></tr>'+Object.entries(R.sub).map(([k,s])=>{
     const ch=[...Array(C).keys()].filter(j=>st.on[j]).map(j=>[j,(s.a[j]-s.b[j])/Math.max(s.secs,1)]).filter(x=>Math.abs(x[1])>=0.01).sort((x,y)=>Math.abs(y[1])-Math.abs(x[1])).slice(0,4);
-    return `<tr><td>${esc(k)}</td><td class=num>${s.files}</td><td class=num>${pct(s.bd/Math.max(s.secs,1))}</td><td class=num>${pct(s.ad/Math.max(s.secs,1))}</td><td>${ch.map(([j,d])=>`<span class=tag>${esc(PR[j])} ${pct(s.b[j]/s.secs)} → <span class="${d>0?'delta-up':'delta-down'}">${pct(s.a[j]/s.secs)}</span></span>`).join('')||'<span class=muted>no change ≥ 1 pt</span>'}</td></tr>`}).join('');
+    return `<tr><td>${esc(k)}</td><td class=num>${s.files}</td><td class=num>${pct(s.bd/Math.max(s.secs,1))}</td><td class=num>${pct(s.ad/Math.max(s.secs,1))}</td>${HAS_M?`<td class=num style="white-space:nowrap">${s.mn?(s.mb/s.mn).toFixed(2)+' → '+(s.ma/s.mn).toFixed(2):'—'}</td>`:''}<td>${ch.map(([j,d])=>`<span class=tag>${esc(PR[j])} ${pct(s.b[j]/s.secs)} → <span class="${d>0?'delta-up':'delta-down'}">${pct(s.a[j]/s.secs)}</span></span>`).join('')||'<span class=muted>no change ≥ 1 pt</span>'}</td></tr>`}).join('');
 }
 function lists(R){
-  const row=p=>`<tr class=row data-i="${p.i}" data-k="${p.k}"><td><span class=play>${p.fb.a&&p.fa.a?'▶':'⋯'}</span></td><td>${esc(p.fb.name)}</td><td class=muted>${esc(p.fb.s)}</td><td class=num style="white-space:nowrap">${pct(p.bd)} → ${pct(p.ad)}</td><td>${p.newCls.map(j=>`<span class=tag>+ ${esc(PR[j])}</span>`).join('')}</td></tr>`;
-  const hd='<tr><th></th><th>file</th><th>folder</th><th class=num>degraded time</th><th>new classes after</th></tr>';
+  const row=p=>`<tr class=row data-i="${p.i}" data-k="${p.k}"><td><span class=play>${p.fb.a&&p.fa.a?'▶':'⋯'}</span></td><td>${esc(p.fb.name)}</td><td class=muted>${esc(p.fb.s)}</td><td class=num style="white-space:nowrap">${pct(p.bd)} → ${pct(p.ad)}</td>${HAS_M?`<td class=num style="white-space:nowrap">${mos(p.fb)} → ${mos(p.fa)}</td>`:''}<td>${p.newCls.map(j=>`<span class=tag>+ ${esc(PR[j])}</span>`).join('')}</td></tr>`;
+  const hd='<tr><th></th><th>file</th><th>folder</th><th class=num>degraded time</th>'+(HAS_M?'<th class=num>NISQA MOS</th>':'')+'<th>new classes after</th></tr>';
   const imp=R.pairs.slice().sort((x,y)=>(y.bd-y.ad)-(x.bd-x.ad)||x.fb.name.localeCompare(y.fb.name)).slice(0,ROWS);
   const neu=R.pairs.filter(p=>p.newSec>0).sort((x,y)=>y.newSec-x.newSec||x.fb.name.localeCompare(y.fb.name)).slice(0,ROWS);
-  $('improved').innerHTML=hd+imp.map(row).join(''); $('newprob').innerHTML=hd+(neu.map(row).join('')||'<tr><td colspan=5 class=muted>none</td></tr>');
+  $('improved').innerHTML=hd+imp.map(row).join(''); $('newprob').innerHTML=hd+(neu.map(row).join('')||`<tr><td colspan=${HAS_M?6:5} class=muted>none</td></tr>`);
 }
 let OPEN=[];
 function openPair(i,k){
   const fb=A.files[i],fa=B.files[k],o={T:st.thr/100,on:st.on,C,PR};
   $('m-body').innerHTML=`<div class=head><div><h2>${esc(fb.name)}</h2><div class=muted>${esc(fb.s)} · ${fb.d.toFixed(1)} s · threshold ${(st.thr/100).toFixed(2)}</div></div><button id=m-close>close ✕</button></div><div class=pair><div class=side id=m-b></div><div class=side id=m-a></div></div>`;
   $('modal').style.display='flex';$('m-close').onclick=closePair;
-  OPEN=[inspector($('m-b'),fb,{...o,title:'Before'}),inspector($('m-a'),fa,{...o,title:'After'})];
+  const mt=f=>f.m?` · NISQA MOS ${f.m[0].toFixed(2)}`:'';
+  OPEN=[inspector($('m-b'),fb,{...o,title:'Before'+mt(fb)}),inspector($('m-a'),fa,{...o,title:'After'+mt(fa)})];
   OPEN.forEach((h,x)=>h.audio&&h.audio.addEventListener('play',()=>OPEN[1-x].audio&&OPEN[1-x].audio.pause()));
 }
 function closePair(){OPEN.forEach(h=>h.stop());OPEN=[];$('modal').style.display='none';$('m-body').innerHTML='';}

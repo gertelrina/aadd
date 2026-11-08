@@ -49,5 +49,12 @@
   "torch_cpu_threads": 6,
   "data": "first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC)",
   "method": "one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded"
+ },
+ "nisqa/cpu": {
+  "files": 300,
+  "audio_seconds": 2111,
+  "wall_s": 7.95,
+  "ms_per_audio_second": 3.76,
+  "x_realtime": 265.6
  }
 }

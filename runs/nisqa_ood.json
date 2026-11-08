@@ -1,0 +1,78 @@
+{
+ "model": "NISQA v2.0 (torchmetrics)",
+ "score_dims": [
+  "mos",
+  "noisiness",
+  "discontinuity",
+  "colouration",
+  "loudness"
+ ],
+ "ood": {
+  "VoiceBank-DEMAND test (824 noisy vs 824 clean twins)": {
+   "n": 1648,
+   "seconds": 24.8,
+   "noise": {
+    "auc_mos": 0.9721890022622302,
+    "auc_noisiness": 0.9924415590536337,
+    "mean_mos_degraded": 3.0599787155690703,
+    "mean_mos_clean": 4.552114274895307
+   }
+  },
+  "DNS-2020 synthetic (clean / noisy, dry / reverberant)": {
+   "n": 600,
+   "seconds": 23.8,
+   "noise": {
+    "auc_mos": 0.8129111111111111,
+    "auc_noisiness": 0.9175111111111112,
+    "mean_mos_degraded": 2.1231250935792922,
+    "mean_mos_clean": 3.4057506597042084
+   },
+   "reverb": {
+    "auc_mos": 0.8570888888888888,
+    "auc_colouration": 0.9177555555555555,
+    "mean_mos_degraded": 2.0136812774340314,
+    "mean_mos_clean": 3.5151944758494693
+   }
+  },
+  "Dynamic-SUPERB NoiseDetection_VCTK_MUSAN-Noise": {
+   "n": 200,
+   "seconds": 3.6,
+   "noise": {
+    "auc_mos": 0.9603790704708136,
+    "auc_noisiness": 0.9589676378667203,
+    "mean_mos_degraded": 2.5341250841770697,
+    "mean_mos_clean": 4.395706019558749
+   }
+  },
+  "Dynamic-SUPERB ReverberationDetection_VCTK_RirsNoises-SmallRoom": {
+   "n": 200,
+   "seconds": 3.9,
+   "reverb": {
+    "auc_mos": 0.9514895330112721,
+    "auc_colouration": 0.9571256038647342,
+    "mean_mos_degraded": 2.9080796474995823,
+    "mean_mos_clean": 4.381417126567276
+   }
+  },
+  "Dynamic-SUPERB ReverberationDetection_VCTK_RirsNoises-MediumRoom": {
+   "n": 200,
+   "seconds": 3.9,
+   "reverb": {
+    "auc_mos": 0.9795692431561998,
+    "auc_colouration": 0.972121578099839,
+    "mean_mos_degraded": 2.620909841164299,
+    "mean_mos_clean": 4.359246516669238
+   }
+  },
+  "Dynamic-SUPERB ReverberationDetection_VCTK_RirsNoises-LargeRoom": {
+   "n": 200,
+   "seconds": 3.6,
+   "reverb": {
+    "auc_mos": 0.966988727858293,
+    "auc_colouration": 0.9408212560386474,
+    "mean_mos_degraded": 2.8231726729351543,
+    "mean_mos_clean": 4.370350285812661
+   }
+  }
+ }
+}

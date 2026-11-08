@@ -51,6 +51,11 @@ def cmd_scan(a: argparse.Namespace) -> int:
     print(f"model={a.model} features={det.features.kind} device={det.device} files={len(files)}", file=sys.stderr)
     file_rows, seg_rows, dicts = [], [], []
     for res in det.scan(files, workers=a.workers, progress=not a.quiet):
+        if a.nisqa and not res.error:
+            from aadd.features import load_audio
+            from aadd.nisqa import nisqa_scores
+
+            res.nisqa = nisqa_scores(*load_audio(res.path, sr=16000))
         file_rows.append(res.file_row())
         if a.segments:
             seg_rows.extend(res.segment_rows())
@@ -302,6 +307,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--keep-tail", action="store_true", help="also score a trailing partial second (zero-padded)")
     s.add_argument(
         "--resolution", type=float, default=1.0, help="segment length in seconds for frame models (v3) [%(default)s]"
+    )
+    s.add_argument(
+        "--nisqa",
+        action="store_true",
+        help='also compute NISQA MOS and quality dimensions per file (pip install "aadd[nisqa]")',
     )
     s.add_argument("--quiet", "-q", action="store_true")
     s.set_defaults(func=cmd_scan)
