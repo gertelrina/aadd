@@ -178,6 +178,15 @@ def _download(url: str, dst: Path) -> Path:
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_suffix(".part")
     print(f"downloading {url} -> {dst}", flush=True)
+    if url.startswith(f"https://huggingface.co/{HF_REPO}/"):
+        # the Hub counts a model download only on requests to config.json, not to the weight files
+        import contextlib
+
+        with contextlib.suppress(Exception):  # statistics only, never block the download
+            urllib.request.urlopen(
+                urllib.request.Request(f"https://huggingface.co/{HF_REPO}/resolve/main/config.json", method="HEAD"),
+                timeout=10,
+            ).close()
     urllib.request.urlretrieve(url, tmp)
     tmp.rename(dst)
     return dst
