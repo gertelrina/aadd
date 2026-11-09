@@ -56,5 +56,19 @@
   "wall_s": 7.95,
   "ms_per_audio_second": 3.76,
   "x_realtime": 265.6
+ },
+ "v3-lite/cpu": {
+  "files": 300,
+  "audio_seconds": 2111,
+  "wall_s": 24.89,
+  "ms_per_audio_second": 11.79,
+  "x_realtime": 84.8
+ },
+ "v3-lite/mps": {
+  "files": 300,
+  "audio_seconds": 2111,
+  "wall_s": 27.74,
+  "ms_per_audio_second": 13.14,
+  "x_realtime": 76.1
  }
 }

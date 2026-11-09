@@ -203,6 +203,8 @@ and are downloaded to `~/.cache/aadd` on first use. The earlier models stay
 available: `v3.0` (first v3 release), and `v2` / `v1`, which predict seven synthetic
 degradations once per second.
 
+**`v3-lite`** (2026-11-09) is a 1.3 M-parameter CRNN distilled from v3.1 on the same generator: 2.7 MB, 12 ms per second of audio on CPU (v3.1: 23 ms). On the held-out English synthetic tests it matches or beats its teacher (frame macro-AP 0.968 vs 0.955), but on real recordings it is weaker: noise ROC-AUC 0.96 on VoiceBank-DEMAND (v3.1: 0.99) and a `time_stretch` false alarm on 10–21 % of clean VCTK clips, so it flags 6–22 % of clean benchmark files (v3.1: 0–4 %). Use it as a fast first pass for noise and reverberation, and v3.1 for anything you act on; details in [runs/README.md](runs/README.md).
+
 ```
 $ aadd scan examples/speech/61-70968-0000_4.flac examples/degradations/orig.flac --model v3
 examples/speech/61-70968-0000_4.flac   4.0s   4/4 degraded s   clipping 1.00, highpass 1.00, hum 1.00
@@ -227,6 +229,7 @@ examples/degradations/orig.flac        2.4s   3/3 degraded s   codec 0.99, lowpa
 | `v1` | mel spectrogram **rendered to a 310×385 PNG with matplotlib** (magma colormap, axes off) | EfficientNet-B0 (ImageNet init), 8 sigmoid outputs | 4.0 M | ≈ 9 ms | the first model (2025-03-11), unchanged weights |
 | `v2` | log-mel tensor 1×128×63 (n_fft 1024, hop 256, top_db 80) | EfficientNet-B0 (ImageNet init, 1-channel stem), 8 sigmoid outputs | 4.0 M | ≈ 1 ms | same data protocol, no image rendering, SpecAugment-style masking |
 | `v3.1` / `v3.0` | Whisper log-mel 80 × 800 (8-s windows, sliding) | Whisper-small encoder, weighted sum of all layers, conv head, 12 sigmoids per 20 ms | 88 M | GPU / Apple MPS recommended | realistic degradations, English + Russian; [weights on Hugging Face](https://huggingface.co/gertelrina/aadd), downloaded on first use |
+| `v3-lite` | 64-band log-mel of 8-s windows | CRNN (conv + BiGRU), 12 sigmoids per 20 ms, distilled from v3.1 | 1.3 M | ≈ 12 ms per audio second end to end on CPU | 2.7 MB; same classes as v3.1; see the note below before using it on real data |
 
 v1 and v2 predict, for every 1-s chunk, the probability of each of
 `AddGaussianNoise, PitchShift, TimeStretch, Shift, ClippingDistortion,

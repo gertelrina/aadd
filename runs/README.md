@@ -55,16 +55,16 @@ NISQA MOS: 3.99 on the clean copies, 2.84 on files with degraded seconds; ROC-AU
 | HPF | 0 | 0 | 0 | 0 | 0 | 0 | **6,606** | 0 |
 | None | 3 | 972 | 47 | 2,190 | 1,475 | 8 | 94 | **58,820** |
 
-## Speed: v1, v2, v3.1 and NISQA on the same 300 files
+## Speed: v1, v2, v3.1, v3-lite and NISQA on the same 300 files
 
-| | `v1` | `v2` | `v3.1` | NISQA |
-|---|---|---|---|---|
-| CPU, per second of audio | 132.9 ms (8× real time) | 39.4 ms (25× real time) | 23.3 ms (43× real time) | 3.8 ms (266× real time) |
-| Apple GPU (MPS), per second of audio | 14.4 ms (69× real time) | 3.1 ms (324× real time) | 6.5 ms (153× real time) | — |
-| CPU, one hour of audio | 478 s | 142 s | 84 s | **14 s** 🏆 |
-| Apple GPU (MPS), one hour of audio | 52 s | **11 s** 🏆 | 24 s | — |
+| | `v1` | `v2` | `v3.1` | `v3-lite` | NISQA |
+|---|---|---|---|---|---|
+| CPU, per second of audio | 132.9 ms (8× real time) | 39.4 ms (25× real time) | 23.3 ms (43× real time) | 11.8 ms (85× real time) | 3.8 ms (266× real time) |
+| Apple GPU (MPS), per second of audio | 14.4 ms (69× real time) | 3.1 ms (324× real time) | 6.5 ms (153× real time) | 13.1 ms (76× real time) | — |
+| CPU, one hour of audio | 478 s | 142 s | 84 s | 42 s | **14 s** 🏆 |
+| Apple GPU (MPS), one hour of audio | 52 s | **11 s** 🏆 | 24 s | 47 s | — |
 
-Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM, macOS 15.7.4, Python 3.13.3, PyTorch 2.15.0 (6 CPU threads). Data: first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC). Method: one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded. v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger. NISQA: the torchmetrics implementation, CPU only; it outputs five quality scores per file, not classes or a timeline.
+Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 18-core GPU), 36 GB RAM, macOS 15.7.4, Python 3.13.3, PyTorch 2.15.0 (6 CPU threads). Data: first 300 files of the regenerated LibriSpeech test-clean set (2 106 s of audio, 16 kHz FLAC). Method: one process, Detector.predict_file per file, end to end (audio decoding, features, model); model loading and one warm-up file excluded. v3.1 processes 8-s windows in one forward pass, which is why it is faster than v2 on CPU despite being 20× larger. v3-lite (1.3 M parameters) is only 2× faster than v3.1 on CPU because decoding and the mel spectrogram dominate at that size; on MPS the launch overhead makes it slower than on CPU. NISQA: the torchmetrics implementation, CPU only; it outputs five quality scores per file, not classes or a timeline.
 
 ## How to read the v1 / v2 numbers
 
@@ -90,7 +90,7 @@ Measured on Apple MacBook Pro, M3 Pro (6 performance + 6 efficiency CPU cores, 1
 |---|---|
 | `eval_v1_test_clean.json`, `eval_v2_test_clean.json` | v1 / v2 on the synthetic test set (per-class P / R / F1 / AUC / AP, confusion, file level) |
 | `eval_baselines_test_clean.json` | DSP baselines on the same set |
-| `eval_v3.json`, `eval_v3_1.json` | v3.0 / v3.1 on held-out generated sets and real out-of-domain sets |
+| `eval_v3.json`, `eval_v3_1.json`, `eval_v3_1_lite.json` | v3.0 / v3.1 / v3-lite on held-out generated sets and public benchmarks |
 | `speed_benchmark.json` | timing of all models with the hardware and method |
 | `nisqa_ood.json`, `nisqa_test_clean.json` | NISQA as a reference on the same real out-of-domain sets and on the v1/v2 test set |
 | `cross_eval.json`, `music_false_positives.json` | from `scripts/cross_eval.py` and `scripts/music_false_positives.py` (v3.0 vs v3.1 music detections by DEMAND noise type and on DNS-2020) |

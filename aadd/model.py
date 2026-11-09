@@ -58,7 +58,8 @@ REGISTRY = {
         "description": "First v3 release (2026-11-05); superseded by v3.1.",
     },
     "v3-lite": {
-        "file": "aadd_v3_lite_crnn_frames.pt",
+        "file": "aadd_v3_1_lite_crnn_frames.pt",
+        "url": "https://huggingface.co/gertelrina/aadd/resolve/main/aadd_v3_1_lite_crnn_frames.pt",
         "description": "1.3M-parameter CRNN distilled from v3: same 12 classes per 20 ms frame, fast on CPU.",
     },
 }
