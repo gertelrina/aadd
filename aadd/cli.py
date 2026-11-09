@@ -49,6 +49,12 @@ def cmd_scan(a: argparse.Namespace) -> int:
         resolution=a.resolution,
     )
     print(f"model={a.model} features={det.features.kind} device={det.device} files={len(files)}", file=sys.stderr)
+    if a.model in ("v1", "v2"):
+        print(
+            f"note: {a.model} detects seven synthetic audiomentations transforms per second and does not transfer to "
+            "real recordings (it flags most clean studio speech); use the default v3 for real data",
+            file=sys.stderr,
+        )
     file_rows, seg_rows, dicts = [], [], []
     for res in det.scan(files, workers=a.workers, progress=not a.quiet):
         if a.nisqa and not res.error:
@@ -84,7 +90,9 @@ def cmd_scan(a: argparse.Namespace) -> int:
         if a.report:
             from aadd.report import build_report
 
-            Path(a.report).write_text(build_report(payload, report_dir=str(Path(a.report).resolve().parent)))
+            Path(a.report).write_text(
+                build_report(payload, audio=a.report_audio, report_dir=str(Path(a.report).resolve().parent))
+            )
             print(f"wrote {a.report}", file=sys.stderr)
     n_deg = sum(1 for r in file_rows if r["status"] == "degraded")
     n_err = sum(1 for r in file_rows if r["status"] == "error")
@@ -301,6 +309,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--segments", help="timeline CSV, one row per --resolution segment")
     s.add_argument("--json", help="full JSON output")
     s.add_argument("--report", help="HTML dashboard with dataset statistics")
+    s.add_argument(
+        "--report-audio",
+        choices=["path", "embed", "none"],
+        default="path",
+        help="how the report plays audio: by relative path (report must stay next to the audio), embedded MP3 for the most degraded files, or no player [%(default)s]",
+    )
     s.add_argument("--workers", type=int, default=0, help="feature-extraction processes (0 = in-process)")
     s.add_argument("--ext", default="flac,wav,mp3,ogg,opus,m4a", help="extensions to scan [%(default)s]")
     s.add_argument("--no-recursive", action="store_true")

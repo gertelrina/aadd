@@ -247,7 +247,8 @@ aadd scan audio_dir/ -o files.csv --segments segments.csv           # per-file C
 aadd scan audio_dir/ --segments segments.csv --resolution 0.1       # timeline in 100-ms segments
 aadd scan audio_dir/ --report report.html                           # interactive HTML dashboard (see Dataset report)
 aadd scan a.flac b.wav --json out.json --threshold 0.7              # files -> JSON, incl. the 100-ms frame timeline
-aadd scan big_dir/ --model v2 --workers 8                           # earlier per-second model, parallel feature extraction
+aadd scan big_dir/ --model v2 --workers 8                           # earlier synthetic-only model (see Results), parallel features
+aadd scan audio_dir/ --report report.html --report-audio embed      # report that still plays audio after being moved
 aadd scan audio_dir/ -o files.csv --nisqa                           # add NISQA MOS and quality dimensions per file
 aadd info                                                           # models, cache, device
 ```
