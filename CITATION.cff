@@ -1,10 +1,12 @@
 cff-version: 1.2.0
-message: "If you use AADD, please cite this repository."
+message: "If you use AADD, please cite this software."
 title: "AADD: Automatic Audio Degradation Detection"
 authors:
   - family-names: Gertel
     given-names: Arina
-version: 2.0.0
+version: 1.0.0
 date-released: 2026-11-05
+doi: 10.5281/zenodo.24352878
 url: "https://github.com/gertelrina/aadd"
 license: MIT
+type: software
