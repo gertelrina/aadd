@@ -478,11 +478,14 @@ tests/           pytest suite (v1 features reproduced bit-for-bit, data pipeline
 <details><summary>BibTeX</summary>
 
 ```bibtex
-@software{gertel_aadd,
-  author = {Gertel, Arina},
-  title  = {AADD: Automatic Audio Degradation Detection},
-  url    = {https://github.com/gertelrina/aadd},
-  year   = {2026}
+@software{gertel2026aadd,
+  author    = {Gertel, Arina},
+  title     = {{AADD}: Automatic Audio Degradation Detection},
+  version   = {1.0.0},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.24352878},
+  url       = {https://doi.org/10.5281/zenodo.24352878}
 }
 ```
 
